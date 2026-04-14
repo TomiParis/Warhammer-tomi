@@ -141,6 +141,9 @@ func _build_planet_text(p: Dictionary) -> String:
 	text += "[color=#c8c0b0]Astropata: %s[/color]\n" % ("Sí" if astropata else "No")
 	text += "[color=#c8c0b0]Ingresos: %d Throne Gelt/mes[/color]\n" % ingresos
 
+	# Flotas del sector
+	text += _build_fleet_section(str(p["segmentum"]), str(p["sector"]))
+
 	# Amenaza actual
 	var amenaza = p.get("amenaza_actual")
 	if amenaza != null and str(amenaza) != "":
@@ -173,6 +176,58 @@ func _format_pop(pop: int) -> String:
 	elif pop >= 1_000_000: return "%.1f millones" % (float(pop) / 1_000_000.0)
 	elif pop >= 1_000: return "%d mil" % floori(float(pop) / 1000.0)
 	else: return str(pop)
+
+func _build_fleet_section(seg_key: String, sec_key: String) -> String:
+	var gd_node: Node = get_node_or_null("/root/GameData")
+	if gd_node == null:
+		return ""
+	var fl_data: Dictionary = gd_node.fleet_data
+	if fl_data.is_empty():
+		return ""
+
+	var sector_key: String = seg_key + "." + sec_key
+	var t: String = "\n[color=#999080]FLOTAS DEL SECTOR[/color]\n"
+
+	# Battlefleet del sector
+	var battlefleets: Array = fl_data.get("battlefleets", [])
+	var found_bf: bool = false
+	for bf: Dictionary in battlefleets:
+		if str(bf["sector"]) == sector_key:
+			var estado_col: String = "6b8c5a"
+			if str(bf["estado"]) == "combate":
+				estado_col = "8c5a5a"
+			elif str(bf["estado"]) == "reparaciones":
+				estado_col = "c09a40"
+			t += " [color=#5a7a9a]⚓[/color] [color=#c8c0b0]%s[/color]\n" % str(bf["nombre"])
+			t += "   [color=#807a6b]%s[/color]\n" % str(bf["admiral"])
+			t += "   [color=#807a6b]%d capital, %d cruceros, %d escoltas[/color]\n" % [
+				int(bf["naves_capital"]), int(bf["cruceros"]), int(bf["escoltas"])]
+			t += "   Estado: [color=#%s]%s[/color]\n" % [estado_col, str(bf["estado"]).capitalize()]
+			found_bf = true
+			break
+	if not found_bf:
+		t += " [color=#605a4a]Sin Battlefleet asignada[/color]\n"
+
+	# Transportes disponibles (global, no por sector)
+	var transports: Array = fl_data.get("transport_fleets", [])
+	var available: int = 0
+	var in_route: int = 0
+	for tr: Dictionary in transports:
+		if str(tr["estado"]) == "disponible":
+			available += 1
+		elif str(tr["estado"]) == "en_ruta":
+			in_route += 1
+	t += " [color=#807a6b]Transportes: %d disponibles, %d en ruta[/color]\n" % [available, in_route]
+
+	# Flotas en tránsito hacia/desde este sector
+	var in_transit: Array = fl_data.get("fleets_in_transit", [])
+	var transit_count: int = 0
+	for ft: Dictionary in in_transit:
+		transit_count += 1
+	if transit_count > 0:
+		t += " [color=#807a6b]Convoys en tránsito: %d[/color]\n" % transit_count
+
+	return t + "\n"
 
 func _build_governance_section(ctrl: Dictionary) -> String:
 	var tipo: String = str(ctrl.get("tipo", ""))

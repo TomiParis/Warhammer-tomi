@@ -398,6 +398,9 @@ func _draw_segmentum_layer() -> void:
 	# Rutas warp reales con color por estabilidad
 	_draw_warp_routes_for_segmentum()
 
+	# Íconos de Battlefleets en sus bases
+	_draw_battlefleet_icons()
+
 	# Título del segmentum
 	_draw_label(_dp.segmentum_centers[_seg_key] + Vector2(0.0, -900.0),
 		str(seg["nombre"]).to_upper(), C_LABEL, 80)
@@ -527,6 +530,45 @@ func _draw_planet(planet: Dictionary) -> void:
 # =============================================================================
 # RUTAS WARP REALES
 # =============================================================================
+
+func _draw_battlefleet_icons() -> void:
+	var gd_node = _map.get_node_or_null("/root/GameData") if _map else null
+	if gd_node == null:
+		return
+	var fl_data: Dictionary = gd_node.fleet_data
+	if fl_data.is_empty():
+		return
+
+	var battlefleets: Array = fl_data.get("battlefleets", [])
+	for bf: Dictionary in battlefleets:
+		var bf_sector: String = str(bf["sector"])
+		# Solo dibujar las del segmentum actual
+		if _seg_key != "" and not bf_sector.begins_with(_seg_key):
+			continue
+		if not _dp.sector_positions.has(bf_sector):
+			continue
+
+		var pos: Vector2 = _dp.sector_positions[bf_sector]
+		# Desplazar un poco para no tapar el label del sector
+		pos += Vector2(0.0, -50.0)
+
+		var estado: String = str(bf["estado"])
+		var icon_col: Color = Color(0.3, 0.5, 0.7, 0.6)
+		if estado == "combate":
+			icon_col = Color(0.7, 0.25, 0.2, 0.7)
+		elif estado == "reparaciones":
+			icon_col = Color(0.6, 0.5, 0.2, 0.5)
+
+		# Ícono: ancla/nave (triángulo apuntando arriba)
+		var s: float = 12.0
+		var tri: PackedVector2Array = PackedVector2Array([
+			pos + Vector2(0, -s),
+			pos + Vector2(s * 0.7, s * 0.5),
+			pos + Vector2(-s * 0.7, s * 0.5),
+		])
+		draw_colored_polygon(tri, icon_col)
+		_draw_label(pos + Vector2(0.0, s + 8.0), str(bf["nombre"]).replace("Battlefleet ", "BF "),
+			Color(0.4, 0.55, 0.7, 0.5), 18)
 
 func _draw_warp_routes_for_segmentum() -> void:
 	var gd_node = _map.get_node_or_null("/root/GameData") if _map else null

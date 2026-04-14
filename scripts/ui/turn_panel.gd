@@ -227,15 +227,26 @@ func _build_resumen(resumen: Dictionary) -> String:
 		t += " Lealtad baja: [color=#c09a40]%d[/color]\n" % baja_lealtad
 		t += " En Nihilus: [color=#807a6b]%d[/color]\n" % nihilus_count
 
-	# Campañas y movimiento
+	# Flotas
+	var fleet: Dictionary = resumen.get("flotas", {})
+	t += "\n[color=#999080]FLOTAS[/color]\n"
+	var fl_transit: int = int(fleet.get("en_transito", 0))
+	var fl_arrived: int = int(fleet.get("llegadas", 0))
+	var fl_lost: int = int(fleet.get("perdidos_warp", 0))
+	var fl_cut: int = int(fleet.get("rutas_cortadas", 0))
+	t += " En tránsito: [color=#c8c0b0]%d convoys[/color]\n" % fl_transit
+	if fl_arrived > 0:
+		t += " [color=#6b8c5a]%d llegaron a destino[/color]\n" % fl_arrived
+	if fl_lost > 0:
+		t += " [color=#8c5a5a]%d perdidos en el Warp[/color]\n" % fl_lost
+	if fl_cut > 0:
+		t += " [color=#c09a40]%d rutas inestables (<20)[/color]\n" % fl_cut
+
+	# Campañas y operaciones
 	t += "\n[color=#999080]OPERACIONES[/color]\n"
 	t += " Campañas activas: [color=#c8c0b0]%d[/color]\n" % int(camp.get("campanas_activas", 0))
-	t += " En tránsito: [color=#c8c0b0]%d[/color]\n" % int(mov.get("en_transito", 0))
 	t += " Mensajes recibidos: [color=#c8c0b0]%d[/color]\n" % int(intel_d.get("mensajes_recibidos", 0))
 
-	var llegadas: int = int(mov.get("llegadas", 0))
-	if llegadas > 0:
-		t += " [color=#6b8c5a]%d unidades llegaron[/color]\n" % llegadas
 	var resueltas: int = int(camp.get("campanas_resueltas", 0))
 	if resueltas > 0:
 		t += " [color=#6b8c5a]%d campañas resueltas[/color]\n" % resueltas
