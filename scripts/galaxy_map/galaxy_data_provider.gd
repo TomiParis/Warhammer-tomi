@@ -5,12 +5,12 @@
 class_name GalaxyDataProvider
 
 # Espacio total de la galaxia
-const GALAXY_DISC_RADIUS: float = 4800.0 # Radio del disco visual desde el centro galáctico (0,0)
-const SOLAR_RADIUS: float = 600.0 # Radio del Segmentum Solar alrededor de Terra
-const MAP_RADIUS: float = 4500.0 # Radio fijo para posicionar elementos canónicos desde Terra
+var GALAXY_DISC_RADIUS: float = GalaxyConfig.GALAXY_DISC_RADIUS # Radio del disco visual desde el centro galáctico (0,0)
+var SOLAR_RADIUS: float = GalaxyConfig.SOLAR_RADIUS # Radio del Segmentum Solar alrededor de Terra
+var MAP_RADIUS: float = GalaxyConfig.MAP_RADIUS # Radio fijo para posicionar elementos canónicos desde Terra
 
 # Terra desplazada al oeste del centro galáctico (~26,000 ly en la realidad)
-const TERRA_OFFSET: Vector2 = Vector2(-1300.0, 230.0)
+var TERRA_OFFSET: Vector2 = GalaxyConfig.TERRA_OFFSET
 
 # Rangos angulares CANÓNICOS de cada segmentum (en grados Godot, NO grados del mapa)
 # Conversión: godot_deg = map_deg - 90
@@ -18,42 +18,10 @@ const TERRA_OFFSET: Vector2 = Vector2(-1300.0, 230.0)
 # Ultima: map 45°-200° → godot 315°-470° (este, 155° arco, EL MÁS GRANDE)
 # Tempestus: map 200°-270° → godot 110°-180° (sur-suroeste, 70° arco)
 # Pacificus: map 270°-315° → godot 180°-225° (oeste-noroeste, 45° arco)
-const SEG_ARCS: Dictionary = {
-	"obscurus":  {"start": 225.0, "end": 315.0, "arc": 90.0},
-	"ultima":    {"start": 315.0, "end": 470.0, "arc": 155.0}, # 470 = 315+155, wraps past 360
-	"tempestus": {"start": 110.0, "end": 180.0, "arc": 70.0},
-	"pacificus": {"start": 180.0, "end": 225.0, "arc": 45.0},
-}
-
-# Colores por segmentum
-const SEG_COLORS: Dictionary = {
-	"solar": Color(0.85, 0.75, 0.3, 0.12),
-	"obscurus": Color(0.7, 0.15, 0.15, 0.12),
-	"ultima": Color(0.2, 0.35, 0.7, 0.12),
-	"tempestus": Color(0.15, 0.4, 0.2, 0.12),
-	"pacificus": Color(0.4, 0.15, 0.5, 0.12),
-}
-
-# Colores por tipo de planeta
-const PLANET_COLORS: Dictionary = {
-	"hive_world": Color(0.8, 0.65, 0.3),
-	"forge_world": Color(0.7, 0.3, 0.2),
-	"agri_world": Color(0.4, 0.5, 0.25),
-	"civilised_world": Color(0.6, 0.6, 0.6, 0.7),
-	"shrine_world": Color(0.75, 0.65, 0.3),
-	"cardinal_world": Color(0.75, 0.65, 0.3),
-	"death_world": Color(0.5, 0.35, 0.5),
-	"fortress_world": Color(0.6, 0.65, 0.7),
-	"knight_world": Color(0.7, 0.75, 0.85),
-	"dead_world": Color(0.25, 0.25, 0.25),
-	"feral_world": Color(0.5, 0.45, 0.35),
-	"feudal_world": Color(0.55, 0.5, 0.4),
-	"mining_world": Color(0.55, 0.45, 0.3),
-	"paradise_world": Color(0.4, 0.6, 0.65),
-	"penal_world": Color(0.45, 0.35, 0.35),
-	"cemetery_world": Color(0.35, 0.35, 0.38),
-	"research_station": Color(0.5, 0.55, 0.65),
-}
+# Datos leídos de archivos centralizados
+var SEG_ARCS: Dictionary = GalaxyConfig.SEG_ARCS
+var SEG_COLORS: Dictionary = GalaxyConfig.SEG_COLORS
+var PLANET_COLORS: Dictionary = PlanetTypes.COLORS
 
 # --- Datos calculados ---
 var segmentum_polygons: Dictionary = {}
@@ -69,7 +37,7 @@ var planet_data_by_id: Dictionary = {}
 var rift_points: PackedVector2Array = PackedVector2Array()
 var eye_of_terror_pos: Vector2 = Vector2.ZERO
 var terra_pos: Vector2 = Vector2.ZERO
-var astronomican_radius: float = 3800.0
+var astronomican_radius: float = GalaxyConfig.ASTRONOMICAN_RADIUS
 
 var warp_storms: Array = []
 var enemy_territories: Array = []
@@ -152,7 +120,7 @@ func _build_segmentum_polygons() -> void:
 
 	# Segmentae exteriores: desde SOLAR_RADIUS hasta el BORDE DEL DISCO GALÁCTICO
 	# El radio exterior VARÍA según la dirección (porque Terra no está en el centro)
-	for seg_key: String in SEG_ARCS:
+	for seg_key: String in GalaxyConfig.SEG_ARCS:
 		var arc_data: Dictionary = SEG_ARCS[seg_key]
 		var a_start: float = deg_to_rad(float(arc_data["start"]))
 		var a_end: float = deg_to_rad(float(arc_data["end"]))
@@ -234,7 +202,7 @@ func _catmull_rom(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: float) 
 
 func _calculate_sector_positions(galaxy: Dictionary) -> void:
 	# Buscar datos de la jerarquía original para map_pos
-	var hierarchy: Dictionary = GameData.GALAXY_HIERARCHY
+	var hierarchy: Dictionary = GalaxyConfig.SECTOR_CONFIG
 
 	for seg_key: String in galaxy["segmentae"]:
 		var seg: Dictionary = galaxy["segmentae"][seg_key]
@@ -250,8 +218,8 @@ func _calculate_sector_positions(galaxy: Dictionary) -> void:
 			var has_map_pos: bool = false
 			if hierarchy.has(seg_key):
 				var h_seg: Dictionary = hierarchy[seg_key]
-				if h_seg["sectores"].has(sec_key):
-					var h_sec: Dictionary = h_seg["sectores"][sec_key]
+				if h_seg.has(sec_key):
+					var h_sec: Dictionary = h_seg[sec_key]
 					if h_sec.has("map_pos"):
 						var mp: Array = h_sec["map_pos"]
 						var jitter: Vector2 = Vector2(_rng.randf_range(-60.0, 60.0), _rng.randf_range(-60.0, 60.0))
@@ -542,7 +510,7 @@ func find_segmentum_at(world_pos: Vector2) -> String:
 	if angle_deg < 0.0:
 		angle_deg += 360.0
 
-	for seg_key: String in SEG_ARCS:
+	for seg_key: String in GalaxyConfig.SEG_ARCS:
 		var arc: Dictionary = SEG_ARCS[seg_key]
 		var a_start: float = float(arc["start"])
 		var a_end: float = float(arc["end"])

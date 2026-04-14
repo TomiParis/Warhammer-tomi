@@ -88,10 +88,10 @@ func _on_search_changed(query: String) -> void:
 		var p: Dictionary = _all_planets[p_idx]
 		var nombre: String = str(p["nombre"]).to_lower()
 		var tipo_key: String = str(p["tipo"])
-		var tipo_name: String = str(GameData.PLANET_TYPES[tipo_key]["nombre"]).to_lower() if GameData.PLANET_TYPES.has(tipo_key) else tipo_key
+		var tipo_name: String = str(PlanetTypes.TYPES[tipo_key]["nombre"]).to_lower() if PlanetTypes.TYPES.has(tipo_key) else tipo_key
 
 		if nombre.contains(q) or tipo_name.contains(q) or tipo_key.contains(q):
-			var display: String = "%s — %s" % [str(p["nombre"]), str(GameData.PLANET_TYPES[tipo_key]["nombre"]) if GameData.PLANET_TYPES.has(tipo_key) else tipo_key]
+			var display: String = "%s — %s" % [str(p["nombre"]), str(PlanetTypes.TYPES[tipo_key]["nombre"]) if PlanetTypes.TYPES.has(tipo_key) else tipo_key]
 			_results_list.add_item(display)
 			_results_list.set_item_metadata(_results_list.item_count - 1, p_idx)
 			results += 1

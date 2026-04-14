@@ -1,7 +1,7 @@
 ## planet_generator.gd - Generador procedural de la galaxia
 ## Genera ~1000 planetas organizados en Segmentae > Sectores > Subsectores
 ## Fiel al lore canónico de Warhammer 40,000
-class_name PlanetGenerator
+class_name PlanetGeneratorLegacy
 
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _used_names: Dictionary = {}

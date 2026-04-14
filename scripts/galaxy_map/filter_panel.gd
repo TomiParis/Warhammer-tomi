@@ -72,10 +72,10 @@ func _build_filters() -> void:
 	_vbox.add_child(type_label)
 
 	# Ordenar tipos por nombre
-	var type_keys: Array = GameData.PLANET_TYPES.keys()
+	var type_keys: Array = PlanetTypes.TYPES.keys()
 	for t_idx: int in type_keys.size():
 		var tipo: String = str(type_keys[t_idx])
-		var nombre: String = str(GameData.PLANET_TYPES[tipo]["nombre"])
+		var nombre: String = str(PlanetTypes.TYPES[tipo]["nombre"])
 		_add_type_check(tipo, nombre)
 
 func _add_type_check(tipo: String, label_text: String) -> void:

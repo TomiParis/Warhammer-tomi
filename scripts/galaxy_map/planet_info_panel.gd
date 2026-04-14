@@ -64,11 +64,11 @@ func show_planet(planet: Dictionary) -> void:
 func _build_planet_text(p: Dictionary) -> String:
 	var nombre: String = str(p["nombre"])
 	var tipo_key: String = str(p["tipo"])
-	var tipo_name: String = str(GameData.PLANET_TYPES[tipo_key]["nombre"]) if GameData.PLANET_TYPES.has(tipo_key) else tipo_key
+	var tipo_name: String = str(PlanetTypes.TYPES[tipo_key]["nombre"]) if PlanetTypes.TYPES.has(tipo_key) else tipo_key
 	var pop: int = int(p["poblacion"])
 	var lado: String = str(p["lado_grieta"])
 	var tithe: String = str(p["tithe_grade"])
-	var tithe_name: String = str(GameData.TITHE_GRADES[tithe]["nombre"]) if GameData.TITHE_GRADES.has(tithe) else tithe
+	var tithe_name: String = str(PlanetTypes.TITHE_GRADES[tithe]["nombre"]) if PlanetTypes.TITHE_GRADES.has(tithe) else tithe
 
 	var controlador: Dictionary = p.get("controlador", {})
 	var ctrl_nombre: String = str(controlador.get("nombre", "Desconocido"))
@@ -148,7 +148,7 @@ func _build_planet_text(p: Dictionary) -> String:
 	return text
 
 func _stat_bar(label: String, value: int) -> String:
-	var filled: int = value / 5 # 20 chars max
+	var filled: int = floori(float(value) / 5.0) # 20 chars max
 	var empty: int = 20 - filled
 	var bar_color: String = "6b8c5a" if value >= 60 else ("c09a40" if value >= 30 else "8c5a5a")
 	return "[color=#807a6b]%-12s[/color] [color=#%s]%s[/color][color=#333]%s[/color] [color=#807a6b]%d[/color]\n" % [
@@ -159,19 +159,17 @@ func _format_pop(pop: int) -> String:
 	if pop <= 0: return "0"
 	elif pop >= 1_000_000_000: return "%.1f mil millones" % (float(pop) / 1_000_000_000.0)
 	elif pop >= 1_000_000: return "%.1f millones" % (float(pop) / 1_000_000.0)
-	elif pop >= 1_000: return "%d mil" % (pop / 1000)
+	elif pop >= 1_000: return "%d mil" % floori(float(pop) / 1000.0)
 	else: return str(pop)
 
 func _get_seg_name(seg_key: String) -> String:
-	var hierarchy: Dictionary = GameData.GALAXY_HIERARCHY
-	if hierarchy.has(seg_key):
-		return str(hierarchy[seg_key]["nombre"])
+	if GalaxyConfig.SEGMENTUM_CONFIG.has(seg_key):
+		return str(GalaxyConfig.SEGMENTUM_CONFIG[seg_key]["nombre"])
 	return seg_key
 
 func _get_sec_name(seg_key: String, sec_key: String) -> String:
-	var hierarchy: Dictionary = GameData.GALAXY_HIERARCHY
-	if hierarchy.has(seg_key):
-		var sectores: Dictionary = hierarchy[seg_key]["sectores"]
+	if GalaxyConfig.SECTOR_CONFIG.has(seg_key):
+		var sectores: Dictionary = GalaxyConfig.SECTOR_CONFIG[seg_key]
 		if sectores.has(sec_key):
 			return str(sectores[sec_key]["nombre"])
 	return sec_key

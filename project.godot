@@ -19,10 +19,7 @@ config/icon="res://icon.svg"
 
 SceneManager="*uid://j20v4cg7v8m1"
 Signal_Debugger="*uid://bq1sw7qb4y3y7"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/SignalVisualizer/plugin.cfg", "res://addons/scene_manager/plugin.cfg", "res://addons/script-ide/plugin.cfg")
+GameData="*res://scripts/autoloads/game_data.gd"
 
 [display]
 
@@ -30,6 +27,10 @@ window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/size/mode=2
 window/stretch/mode="canvas_items"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/SignalVisualizer/plugin.cfg", "res://addons/scene_manager/plugin.cfg", "res://addons/script-ide/plugin.cfg")
 
 [physics]
 

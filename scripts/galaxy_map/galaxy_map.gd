@@ -46,8 +46,8 @@ var active_filters: Dictionary = {} # tipo -> bool, lado -> bool, etc.
 var filter_dimmed_ids: Dictionary = {} # planet_id -> true si atenuado
 
 func _ready() -> void:
-	# Generar la galaxia
-	var generator: PlanetGenerator = PlanetGenerator.new()
+	# Generar la galaxia usando el generador escalable
+	var generator: GalaxyGenerator = GalaxyGenerator.new()
 	galaxy = generator.generate_galaxy(42)
 
 	# Calcular posiciones

@@ -1,6 +1,7 @@
-## game_data.gd - Datos estáticos para la generación galáctica
-## Contiene toda la estructura canónica del Imperium of Man
-class_name GameData
+## game_data.gd - DEPRECADO: migrado a scripts/data/ y scripts/autoloads/
+## Este archivo se mantiene como referencia histórica
+## Los datos ahora están en: PlanetTypes, GalaxyConfig, CanonicalData
+class_name GameDataLegacy
 
 # =============================================================================
 # TIPOS DE PLANETAS (17 tipos canónicos)

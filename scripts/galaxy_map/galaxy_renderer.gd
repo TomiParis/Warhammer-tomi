@@ -64,7 +64,7 @@ func _draw_galaxy_layer() -> void:
 	# Dibujar polígonos de segmentae
 	for seg_key: String in _dp.segmentum_polygons:
 		var poly: PackedVector2Array = _dp.segmentum_polygons[seg_key]
-		var color: Color = GalaxyDataProvider.SEG_COLORS.get(seg_key, Color(0.3, 0.3, 0.3, 0.1))
+		var color: Color = GalaxyConfig.SEG_COLORS.get(seg_key, Color(0.3, 0.3, 0.3, 0.1))
 		draw_colored_polygon(poly, color)
 		_draw_polygon_outline(poly, Color(color.r, color.g, color.b, 0.25), 2.0)
 
@@ -104,7 +104,7 @@ func _draw_galaxy_layer() -> void:
 		var seg_name: String = ""
 		if _galaxy["segmentae"].has(seg_key):
 			seg_name = str(_galaxy["segmentae"][seg_key]["nombre"]).to_upper()
-		var seg_color: Color = GalaxyDataProvider.SEG_COLORS.get(seg_key, Color(0.5, 0.5, 0.5, 0.5))
+		var seg_color: Color = GalaxyConfig.SEG_COLORS.get(seg_key, Color(0.5, 0.5, 0.5, 0.5))
 		_draw_label(pos, seg_name, Color(seg_color.r * 3.0, seg_color.g * 3.0, seg_color.b * 3.0, 0.7), 300)
 
 	# Indicador de la Gran Grieta (posicionado a lo largo de la grieta)
@@ -267,7 +267,7 @@ func _draw_sector_circles() -> void:
 		var sec_key: String = parts[1]
 
 		# Color del círculo según el segmentum
-		var seg_color: Color = GalaxyDataProvider.SEG_COLORS.get(seg_key, Color(0.3, 0.3, 0.3, 0.1))
+		var seg_color: Color = GalaxyConfig.SEG_COLORS.get(seg_key, Color(0.3, 0.3, 0.3, 0.1))
 		var circle_color: Color = Color(seg_color.r, seg_color.g, seg_color.b, 0.35)
 
 		# Relleno tenue del sector
@@ -291,7 +291,7 @@ func _draw_sector_circles() -> void:
 
 func _draw_galaxy_disc() -> void:
 	# Disco galáctico centrado en el CENTRO GALÁCTICO REAL (Vector2.ZERO)
-	var disc_r: float = GalaxyDataProvider.GALAXY_DISC_RADIUS
+	var disc_r: float = GalaxyConfig.GALAXY_DISC_RADIUS
 	var steps: int = 64
 	var pts: PackedVector2Array = PackedVector2Array()
 	for i: int in steps:
@@ -355,7 +355,7 @@ func _draw_segmentum_layer() -> void:
 	# Fondo del segmentum (polígono más visible que en capa 1)
 	if _dp.segmentum_polygons.has(_seg_key):
 		var poly: PackedVector2Array = _dp.segmentum_polygons[_seg_key]
-		var color: Color = GalaxyDataProvider.SEG_COLORS.get(_seg_key, Color(0.3, 0.3, 0.3, 0.1))
+		var color: Color = GalaxyConfig.SEG_COLORS.get(_seg_key, Color(0.3, 0.3, 0.3, 0.1))
 		draw_colored_polygon(poly, Color(color.r, color.g, color.b, 0.08))
 
 	# Dibujar sectores (tamaños escalados para zoom ~0.25)
@@ -370,7 +370,7 @@ func _draw_segmentum_layer() -> void:
 		var lado: String = str(sec["lado_grieta"])
 
 		# Relleno del sector
-		var seg_col: Color = GalaxyDataProvider.SEG_COLORS.get(_seg_key, Color(0.3, 0.3, 0.3))
+		var seg_col: Color = GalaxyConfig.SEG_COLORS.get(_seg_key, Color(0.3, 0.3, 0.3))
 		_draw_filled_circle(pos, radius, Color(seg_col.r, seg_col.g, seg_col.b, 0.05))
 
 		# Borde punteado del sector (grosor visible a zoom 0.25)

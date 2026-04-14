@@ -35,7 +35,7 @@ func show_planet(planet: Dictionary, screen_pos: Vector2) -> void:
 		return
 	var nombre: String = str(planet["nombre"])
 	var tipo_key: String = str(planet["tipo"])
-	var tipo_name: String = str(GameData.PLANET_TYPES[tipo_key]["nombre"]) if GameData.PLANET_TYPES.has(tipo_key) else tipo_key
+	var tipo_name: String = str(PlanetTypes.TYPES[tipo_key]["nombre"]) if PlanetTypes.TYPES.has(tipo_key) else tipo_key
 	var pop: int = int(planet["poblacion"])
 	var pop_str: String = _format_pop(pop)
 
