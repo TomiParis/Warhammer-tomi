@@ -148,14 +148,17 @@ func _draw_warp_storms() -> void:
 		var nombre: String = str(storm["nombre"])
 
 		# Glow exterior
-		_draw_filled_circle(pos, radius * 1.4, Color(color.r, color.g, color.b, color.a * 0.3))
+		_draw_filled_circle(pos, radius * 1.5, Color(color.r, color.g, color.b, color.a * 0.2))
 		# Core
 		_draw_filled_circle(pos, radius, color)
-		# Centro más intenso
-		_draw_filled_circle(pos, radius * 0.4, Color(color.r, color.g, color.b, color.a * 1.5))
+		# Centro intenso
+		_draw_filled_circle(pos, radius * 0.4, Color(color.r, color.g, color.b, minf(color.a * 1.8, 1.0)))
 
-		# Label
-		_draw_label(pos + Vector2(0.0, -radius - 30.0), nombre, Color(color.r * 1.5, color.g * 1.5, color.b * 1.5, 0.5), 55)
+		# Label multilinea
+		var label_color: Color = Color(color.r * 1.5, color.g * 1.5, color.b * 1.5, 0.55)
+		var lines: PackedStringArray = nombre.split("\n")
+		for l: int in lines.size():
+			_draw_label(pos + Vector2(0.0, -radius - 50.0 + float(l) * 65.0), lines[l], label_color, 55)
 
 # =============================================================================
 # TERRITORIOS ENEMIGOS
@@ -171,12 +174,14 @@ func _draw_enemy_territories() -> void:
 		var label_color: Color = terr["label_color"]
 		var nombre: String = str(terr["nombre"])
 
-		# Relleno
 		_draw_filled_circle(center, radius, color)
-		# Borde punteado
-		_draw_dashed_circle(center, radius, border_color, 2.0)
-		# Label
-		_draw_label(center, nombre, label_color, 60)
+		_draw_dashed_circle(center, radius, border_color, 3.0)
+
+		# Label multilinea
+		var lines: PackedStringArray = nombre.split("\n")
+		var total_h: float = float(lines.size()) * 65.0
+		for l: int in lines.size():
+			_draw_label(center + Vector2(0.0, -total_h / 2.0 + float(l) * 65.0), lines[l], label_color, 60)
 
 # =============================================================================
 # REGIÓN DE ULTRAMAR
@@ -209,34 +214,44 @@ func _draw_hive_fleets() -> void:
 		if points.size() < 2:
 			continue
 
-		# Dibujar la línea de avance (más gruesa al final = cabeza de la flota)
+		# Glow detrás de la línea de avance
 		for j: int in range(0, points.size() - 1):
 			var p1: Vector2 = points[j]
 			var p2: Vector2 = points[j + 1]
-			# Grosor creciente hacia la cabeza
-			var width: float = 2.0 + float(j) * 3.0
+			var glow_w: float = 40.0 + float(j) * 20.0
+			draw_line(p1, p2, Color(color.r, color.g, color.b, 0.08), glow_w, true)
+
+		# Línea de avance (grosor visible a zoom galáctico)
+		for j: int in range(0, points.size() - 1):
+			var p1: Vector2 = points[j]
+			var p2: Vector2 = points[j + 1]
+			var width: float = 10.0 + float(j) * 12.0
 			draw_line(p1, p2, color, width, true)
 
-		# Punta de flecha en el último punto
+		# Punta de flecha grande en el último punto
 		var tip: Vector2 = points[points.size() - 1]
-		var prev: Vector2 = points[points.size() - 2]
-		var dir: Vector2 = (tip - prev).normalized()
+		var prev_pt: Vector2 = points[points.size() - 2]
+		var dir: Vector2 = (tip - prev_pt).normalized()
 		var perp: Vector2 = dir.rotated(PI / 2.0)
-		var arrow_size: float = 60.0
+		var arrow_size: float = 180.0
 
 		var arrow_pts: PackedVector2Array = PackedVector2Array([
 			tip + dir * arrow_size,
-			tip - dir * 10.0 + perp * arrow_size * 0.5,
-			tip - dir * 10.0 - perp * arrow_size * 0.5,
+			tip - dir * 30.0 + perp * arrow_size * 0.45,
+			tip - dir * 30.0 - perp * arrow_size * 0.45,
 		])
 		draw_colored_polygon(arrow_pts, color)
 
-		# Label al inicio del vector (fuera de la galaxia)
+		# Labels al inicio del vector (fuera de la galaxia, multilinea manual)
 		var label_pos: Vector2 = points[0]
-		_draw_label(label_pos, nombre, Color(color.r, color.g, color.b, 0.7), 70)
-		# Status
-		var status_color: Color = Color(0.8, 0.2, 0.2, 0.6) if status == "ACTIVA" else Color(0.5, 0.5, 0.4, 0.4)
-		_draw_label(label_pos + Vector2(0.0, 80.0), "[" + status + "]", status_color, 45)
+		var name_lines: PackedStringArray = nombre.split("\n")
+		for l: int in name_lines.size():
+			_draw_label(label_pos + Vector2(0.0, float(l) * 110.0), name_lines[l],
+				Color(color.r, color.g, color.b, 0.7), 100)
+		# Status debajo
+		var status_y: float = float(name_lines.size()) * 110.0 + 30.0
+		var status_color: Color = Color(0.9, 0.15, 0.15, 0.7) if status == "ACTIVA" else Color(0.5, 0.5, 0.4, 0.45)
+		_draw_label(label_pos + Vector2(0.0, status_y), "[" + status + "]", status_color, 70)
 
 func _draw_sector_circles() -> void:
 	# Dibujar cada sector como un círculo con nombre en la vista galáctica
@@ -293,17 +308,29 @@ func _draw_rift() -> void:
 	if _dp.rift_points.size() < 2:
 		return
 
-	# Glow ancho
+	# Glow exterior muy ancho y difuso
 	for i: int in range(0, _dp.rift_points.size() - 1):
 		var p1: Vector2 = _dp.rift_points[i]
 		var p2: Vector2 = _dp.rift_points[i + 1]
-		draw_line(p1, p2, C_RIFT_GLOW, 80.0, true)
+		draw_line(p1, p2, Color(0.4, 0.05, 0.1, 0.06), 350.0, true)
 
-	# Línea central más intensa
+	# Glow medio
 	for i: int in range(0, _dp.rift_points.size() - 1):
 		var p1: Vector2 = _dp.rift_points[i]
 		var p2: Vector2 = _dp.rift_points[i + 1]
-		draw_line(p1, p2, C_RIFT, 8.0, true)
+		draw_line(p1, p2, Color(0.55, 0.08, 0.15, 0.12), 150.0, true)
+
+	# Core de la grieta
+	for i: int in range(0, _dp.rift_points.size() - 1):
+		var p1: Vector2 = _dp.rift_points[i]
+		var p2: Vector2 = _dp.rift_points[i + 1]
+		draw_line(p1, p2, Color(0.7, 0.1, 0.2, 0.3), 40.0, true)
+
+	# Centro más brillante
+	for i: int in range(0, _dp.rift_points.size() - 1):
+		var p1: Vector2 = _dp.rift_points[i]
+		var p2: Vector2 = _dp.rift_points[i + 1]
+		draw_line(p1, p2, Color(0.85, 0.15, 0.25, 0.5), 12.0, true)
 
 func _draw_eye_of_terror() -> void:
 	# Círculos concéntricos pulsantes
