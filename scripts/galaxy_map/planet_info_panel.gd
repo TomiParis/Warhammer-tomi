@@ -62,6 +62,7 @@ func show_planet(planet: Dictionary) -> void:
 		return
 	visible = true
 	_content.text = _build_planet_text(planet)
+	_content.scroll_to_line(0)
 
 func _build_planet_text(p: Dictionary) -> String:
 	var nombre: String = str(p["nombre"])
