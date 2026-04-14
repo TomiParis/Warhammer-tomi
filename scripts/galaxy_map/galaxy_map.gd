@@ -177,12 +177,18 @@ func _handle_click(screen_pos: Vector2) -> void:
 
 	match current_state:
 		MapState.GALAXY:
+			# Solo navegar si el click cae DENTRO de un segmentum visible
+			# (dentro del disco galáctico y del polígono del segmentum)
+			var dist_to_terra: float = world_pos.distance_to(data_provider.TERRA_OFFSET)
+			if dist_to_terra > data_provider.GALAXY_DISC_RADIUS:
+				return # Click fuera de la galaxia
 			var seg: String = data_provider.find_segmentum_at(world_pos)
 			if seg != "":
 				navigate_to_segmentum(seg)
 
 		MapState.SEGMENTUM:
-			var sec: String = data_provider.find_sector_at(world_pos, selected_segmentum)
+			# Solo navegar si el click cae DENTRO del radio del sector
+			var sec: String = data_provider.find_sector_at_within_radius(world_pos, selected_segmentum)
 			if sec != "":
 				navigate_to_sector(sec)
 
