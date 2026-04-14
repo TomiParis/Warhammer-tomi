@@ -19,15 +19,14 @@ func _ready() -> void:
 	style.content_margin_bottom = 8.0
 	add_theme_stylebox_override("panel", style)
 
-	# Misma posición que PlanetInfoPanel (lo reemplaza temporalmente)
-	anchor_left = 1.0
-	anchor_right = 1.0
+	# Posición: izquierda, debajo de la lista de flotas
+	anchor_left = 0.0
 	anchor_top = 0.0
 	anchor_bottom = 1.0
-	offset_left = -430.0
-	offset_top = 5.0
-	offset_bottom = -220.0
-	offset_right = -5.0
+	offset_left = 165.0
+	offset_top = 420.0 # Debajo del fleet_list_panel expandido
+	offset_right = 465.0
+	offset_bottom = -170.0
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL

@@ -9,13 +9,11 @@ var _minimized: bool = true
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: izquierda, parte inferior (debajo de filtros, arriba del EventLog)
+	# Posición: arriba-izquierda, debajo del breadcrumb
 	anchor_left = 0.0
-	anchor_top = 1.0
-	anchor_bottom = 1.0
-	offset_left = 5.0
-	offset_top = -50.0 # Solo el botón cuando minimizado
-	offset_bottom = -5.0
+	anchor_top = 0.0
+	offset_left = 165.0 # A la derecha del panel de filtros
+	offset_top = 35.0
 	custom_minimum_size = Vector2(220, 0)
 
 	var style: StyleBoxFlat = StyleBoxFlat.new()
@@ -38,8 +36,7 @@ func _ready() -> void:
 
 	_scroll_container = ScrollContainer.new()
 	_scroll_container.visible = false
-	_scroll_container.custom_minimum_size = Vector2(220, 0)
-	_scroll_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll_container.custom_minimum_size = Vector2(210, 350)
 	main_vbox.add_child(_scroll_container)
 
 	_content = RichTextLabel.new()
@@ -64,10 +61,8 @@ func _on_toggle() -> void:
 	_minimized = not _minimized
 	_scroll_container.visible = not _minimized
 	_toggle_btn.text = "▼ FLOTAS" if not _minimized else "► FLOTAS"
-	if _minimized:
-		offset_top = -50.0
-	else:
-		offset_top = -400.0
+	# Expandir hacia abajo
+	# (offset_top fijo, el panel crece por el scroll container)
 	_update_style()
 	if not _minimized:
 		_refresh()
