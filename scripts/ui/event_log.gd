@@ -197,12 +197,23 @@ func _refresh_content() -> void:
 		var ev: Dictionary = eventos[i]
 		var sev: int = int(ev.get("severity", 0))
 		var sev_color: Color = EventDefinitions.SEVERITY_COLORS.get(sev, Color.WHITE)
+		var sev_name: String = str(EventDefinitions.SEVERITY_NAMES.get(sev, ""))
+		var cat: int = int(ev.get("category", 0))
+		var cat_name: String = str(EventDefinitions.CATEGORY_NAMES.get(cat, ""))
 		var hex: String = sev_color.to_html(false)
 
 		var planeta_id: String = str(ev.get("planeta_id", ""))
 		var planeta_nombre: String = str(ev.get("planeta_nombre", "?"))
 
+		# Línea 1: ícono + nombre + planeta link + categoría + severidad
 		text += "[color=#%s]●[/color] [b]%s[/b] — " % [hex, str(ev.get("nombre", "?"))]
-		text += "[url=%s][color=#c9a84c]%s[/color][/url]\n" % [planeta_id, planeta_nombre]
+		text += "[url=%s][color=#c9a84c]%s[/color][/url]" % [planeta_id, planeta_nombre]
+		text += " [color=#605a4a]%s[/color]" % cat_name
+		if not _showing_current:
+			text += " [color=#504a3a](T%s)[/color]" % str(ev.get("turno", "?"))
+		text += " [color=#%s][%s][/color]\n" % [hex, sev_name]
+
+		# Línea 2: descripción en pequeño
+		text += "  [color=#504a3a]%s[/color]\n" % str(ev.get("descripcion", ""))
 
 	_content.text = text
