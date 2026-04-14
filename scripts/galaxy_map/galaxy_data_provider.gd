@@ -9,8 +9,8 @@ var GALAXY_DISC_RADIUS: float = 4800.0 # Radio del disco visual desde el centro 
 var SOLAR_RADIUS: float = 600.0 # Radio del Segmentum Solar alrededor de Terra
 var MAP_RADIUS: float = 4500.0 # Radio fijo para posicionar elementos canónicos desde Terra
 
-# Terra desplazada al oeste del centro galáctico (~26,000 ly en la realidad)
-var TERRA_OFFSET: Vector2 = Vector2(-1300.0, 230.0)
+# Terra en el centro (0,0) como en los mapas oficiales de GW
+var TERRA_OFFSET: Vector2 = Vector2.ZERO
 
 # Rangos angulares CANÓNICOS de cada segmentum (en grados Godot, NO grados del mapa)
 # Conversión: godot_deg = map_deg - 90
@@ -104,8 +104,8 @@ func calculate_all(galaxy: Dictionary) -> void:
 			terra_pos = planet_positions.get(pid, terra_pos)
 			break
 
-	# Posiciones canónicas
-	eye_of_terror_pos = _map_to_world(325.0, 0.60)
+	# Ojo del Terror: noroeste, entre 10h y 11h = map ~315°, dentro de Obscurus
+	eye_of_terror_pos = _map_to_world(315.0, 0.55)
 
 	_build_warp_storms()
 	_build_enemy_territories()
@@ -169,21 +169,22 @@ func _build_segmentum_polygons() -> void:
 
 func _build_rift() -> void:
 	rift_points.clear()
-	# Cicatrix Maledictum: Eye of Terror (NW) → Hadex Anomaly (E)
-	# Pasa al NORTE de Terra, bien separada (~15% del radio galáctico)
-	# En el mapa canónico cruza el tercio superior de la galaxia
+	# Cicatrix Maledictum: cruza HORIZONTALMENTE de oeste a este
+	# Empieza cerca del Ojo del Terror (NW) y termina en el borde este
+	# Pasa al NORTE de Terra — Terra queda en el lado Sanctus (sur)
+	# Más o menos horizontal como en los mapas oficiales de GW
 	var control_points: Array = [
-		_map_to_world(320.0, 0.75), # Origen: Ojo del Terror (NW)
-		_map_to_world(335.0, 0.58), # Corredor de Nachmund
-		_map_to_world(350.0, 0.40), # Norte de Solar
-		_map_to_world(5.0, 0.28),   # Pasa al norte de Terra
-		_map_to_world(20.0, 0.22),  # Punto más cercano a Terra (aún al norte)
-		_map_to_world(40.0, 0.30),  # Entra en Ultima norte
-		_map_to_world(55.0, 0.40),  # Norte de Ultima
-		_map_to_world(70.0, 0.52),  # Se ensancha hacia el este
-		_map_to_world(80.0, 0.65),  # Eastern Fringe
-		_map_to_world(90.0, 0.80),  # Cerca del T'au
-		_map_to_world(95.0, 0.95),  # Terminus: Hadex Anomaly (borde E)
+		_map_to_world(300.0, 0.70),  # Inicio: noroeste, cerca del Ojo
+		_map_to_world(320.0, 0.50),  # Corredor de Nachmund
+		_map_to_world(340.0, 0.30),  # Se acerca al centro, norte de Solar
+		_map_to_world(355.0, 0.18),  # Justo al norte de Terra
+		_map_to_world(10.0, 0.15),   # Punto más cercano a Terra (norte)
+		_map_to_world(25.0, 0.20),   # Empieza a alejarse hacia el este
+		_map_to_world(45.0, 0.30),   # Entra en Ultima norte
+		_map_to_world(60.0, 0.42),   # Noreste de Ultima
+		_map_to_world(75.0, 0.55),   # Este, se ensancha
+		_map_to_world(85.0, 0.70),   # Eastern Fringe
+		_map_to_world(95.0, 0.90),   # Terminus: Hadex Anomaly (borde E)
 	]
 
 	for i: int in range(0, control_points.size() - 1):
@@ -326,33 +327,38 @@ func _calculate_planet_positions(galaxy: Dictionary) -> void:
 
 func _build_warp_storms() -> void:
 	warp_storms.clear()
+	# Maelstrom: en Ultima, sureste del centro — 4h, radio 0.30
 	warp_storms.append({
 		"nombre": "The Maelstrom",
-		"pos": _map_to_world(110.0, 0.25),
+		"pos": _map_to_world(120.0, 0.28),
 		"radius": 160.0,
 		"color": Color(0.7, 0.2, 0.4, 0.4),
 	})
+	# Hadex Anomaly: borde este extremo — 3h, radio 0.90
 	warp_storms.append({
 		"nombre": "Hadex Anomaly",
-		"pos": _map_to_world(95.0, 0.88),
+		"pos": _map_to_world(85.0, 0.90),
 		"radius": 130.0,
 		"color": Color(0.5, 0.15, 0.5, 0.35),
 	})
+	# Storm of the Emperor's Wrath: Tempestus — 6:30h
 	warp_storms.append({
 		"nombre": "Storm of the\nEmperor's Wrath",
-		"pos": _map_to_world(230.0, 0.60),
+		"pos": _map_to_world(195.0, 0.55),
 		"radius": 110.0,
 		"color": Color(0.6, 0.5, 0.15, 0.3),
 	})
+	# Screaming Vortex: cerca del Ojo del Terror — 10:30h
 	warp_storms.append({
 		"nombre": "Screaming Vortex",
-		"pos": _map_to_world(310.0, 0.50),
+		"pos": _map_to_world(320.0, 0.45),
 		"radius": 80.0,
 		"color": Color(0.6, 0.15, 0.2, 0.3),
 	})
+	# Ruinstorm Remnant: Pacificus — 8:30h
 	warp_storms.append({
 		"nombre": "Ruinstorm\nRemnant",
-		"pos": _map_to_world(250.0, 0.40),
+		"pos": _map_to_world(255.0, 0.40),
 		"radius": 90.0,
 		"color": Color(0.4, 0.2, 0.5, 0.25),
 	})
@@ -364,20 +370,20 @@ func _build_warp_storms() -> void:
 func _build_enemy_territories() -> void:
 	enemy_territories.clear()
 
-	# Imperio T'au: map 80°, radio 0.80 (Eastern Fringe, norte de Ultramar)
+	# Imperio T'au: 2:30h, borde este — Eastern Fringe
 	enemy_territories.append({
 		"nombre": "IMPERIO T'AU",
-		"center": _map_to_world(80.0, 0.82),
+		"center": _map_to_world(70.0, 0.85),
 		"radius": 220.0,
 		"color": Color(0.2, 0.5, 0.6, 0.10),
 		"border_color": Color(0.3, 0.6, 0.7, 0.25),
 		"label_color": Color(0.3, 0.6, 0.7, 0.45),
 	})
 
-	# Octarius: map 130°, radio 0.50 (guerra Ork vs Tiránidos)
+	# Octarius: 3:40h, sureste en Ultima
 	enemy_territories.append({
 		"nombre": "ZONA DE GUERRA\nOCTARIUS",
-		"center": _map_to_world(130.0, 0.50),
+		"center": _map_to_world(110.0, 0.42),
 		"radius": 250.0,
 		"color": Color(0.4, 0.5, 0.1, 0.08),
 		"border_color": Color(0.5, 0.6, 0.15, 0.20),
@@ -387,7 +393,7 @@ func _build_enemy_territories() -> void:
 	# Dinastía Necrona Szarekhan (dispersa en el este)
 	enemy_territories.append({
 		"nombre": "DYNASTÍA NECRONA\nSZAREKHAN",
-		"center": _map_to_world(60.0, 0.55),
+		"center": _map_to_world(50.0, 0.55),
 		"radius": 180.0,
 		"color": Color(0.3, 0.5, 0.3, 0.06),
 		"border_color": Color(0.4, 0.7, 0.4, 0.18),
@@ -397,7 +403,7 @@ func _build_enemy_territories() -> void:
 	# Dominios Necrones sur
 	enemy_territories.append({
 		"nombre": "DOMINIOS\nNECRONES",
-		"center": _map_to_world(220.0, 0.55),
+		"center": _map_to_world(210.0, 0.55),
 		"radius": 200.0,
 		"color": Color(0.3, 0.5, 0.3, 0.06),
 		"border_color": Color(0.4, 0.7, 0.4, 0.18),
@@ -411,46 +417,41 @@ func _build_enemy_territories() -> void:
 func _build_hive_fleet_vectors() -> void:
 	hive_fleet_vectors.clear()
 
-	# Behemoth: viene del ESTE puro (map 90°), directo a Ultramar (map 120°, 0.70)
-	# Primer contacto en 745.M41, destruida en la Batalla de Macragge
+	# Behemoth: viene del ESTE (3h = map 90°), directo a Ultramar
 	hive_fleet_vectors.append({
 		"nombre": "HIVE FLEET\nBEHEMOTH",
 		"points": PackedVector2Array([
-			_map_to_world(95.0, 1.20),  # Fuera de la galaxia, este
-			_map_to_world(95.0, 1.00),  # Borde galáctico este
-			_map_to_world(100.0, 0.85), # Eastern Fringe
-			_map_to_world(110.0, 0.75), # Hacia Ultramar
-			_map_to_world(118.0, 0.70), # Macragge
+			_map_to_world(88.0, 1.15),
+			_map_to_world(89.0, 0.95),
+			_map_to_world(90.0, 0.80),
+			_map_to_world(90.0, 0.68),  # Hacia Macragge/Ultramar
 		]),
 		"color": Color(0.8, 0.1, 0.45, 0.55),
 		"status": "DESTRUIDA",
 	})
 
-	# Kraken: viene del SURESTE (map ~140°), se dispersa en múltiples tendriles
-	# Segundo contacto en 992.M41, fragmentada pero activa
+	# Kraken: viene del SURESTE (4:30h = map 135°), se dispersa
 	hive_fleet_vectors.append({
 		"nombre": "HIVE FLEET\nKRAKEN",
 		"points": PackedVector2Array([
-			_map_to_world(140.0, 1.20),  # Fuera de la galaxia, SE
-			_map_to_world(138.0, 1.00),  # Borde galáctico SE
-			_map_to_world(130.0, 0.80),  # Penetra el Eastern Fringe
-			_map_to_world(120.0, 0.60),  # Se dispersa
-			_map_to_world(110.0, 0.45),  # Hacia el interior
+			_map_to_world(140.0, 1.15),
+			_map_to_world(135.0, 0.92),
+			_map_to_world(125.0, 0.72),
+			_map_to_world(115.0, 0.52),
 		]),
 		"color": Color(0.6, 0.15, 0.55, 0.50),
 		"status": "FRAGMENTADA",
 	})
 
-	# Leviathan: viene del SUR (map ~180°), ataque en tenaza desde abajo
-	# del plano galáctico. La más peligrosa, sigue ACTIVA
+	# Leviathan: viene del SUR (6h = map 180°), la más peligrosa
 	hive_fleet_vectors.append({
 		"nombre": "HIVE FLEET\nLEVIATHAN",
 		"points": PackedVector2Array([
-			_map_to_world(185.0, 1.20),  # Debajo del plano galáctico
-			_map_to_world(183.0, 1.00),  # Borde sur
-			_map_to_world(178.0, 0.80),  # Penetra por el sur
-			_map_to_world(170.0, 0.60),  # Avanza al norte
-			_map_to_world(160.0, 0.40),  # Interior de Ultima sur
+			_map_to_world(185.0, 1.15),
+			_map_to_world(183.0, 0.92),
+			_map_to_world(178.0, 0.72),
+			_map_to_world(170.0, 0.52),
+			_map_to_world(160.0, 0.35),
 		]),
 		"color": Color(0.85, 0.15, 0.2, 0.60),
 		"status": "ACTIVA",

@@ -299,10 +299,7 @@ func _draw_galaxy_disc() -> void:
 		pts.append(Vector2(cos(angle) * disc_r, sin(angle) * disc_r))
 	draw_colored_polygon(pts, Color(0.06, 0.05, 0.10, 0.12))
 
-	# Marca del centro galáctico real
-	draw_circle(Vector2.ZERO, 50.0, Color(0.3, 0.2, 0.1, 0.2))
-	draw_circle(Vector2.ZERO, 18.0, Color(0.4, 0.3, 0.15, 0.35))
-	_draw_label(Vector2(0.0, 80.0), "CENTRO GALÁCTICO", Color(0.4, 0.3, 0.15, 0.25), 70)
+	# Centro galáctico = Terra (en este mapa, como en los mapas oficiales GW)
 
 func _draw_rift() -> void:
 	if _dp.rift_points.size() < 2:

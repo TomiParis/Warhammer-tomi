@@ -6,11 +6,12 @@ class_name GalaxyConfig
 # =============================================================================
 # GEOMETRÍA GALÁCTICA
 # =============================================================================
+# Terra en el CENTRO (0,0) como en los mapas oficiales de GW
 const GALAXY_DISC_RADIUS: float = 4800.0
 const SOLAR_RADIUS: float = 600.0
 const MAP_RADIUS: float = 4500.0
-const TERRA_OFFSET: Vector2 = Vector2(-1300.0, 230.0)
-const ASTRONOMICAN_RADIUS: float = 3800.0
+const TERRA_OFFSET: Vector2 = Vector2.ZERO # Terra = centro del mapa
+const ASTRONOMICAN_RADIUS: float = 3500.0
 
 # =============================================================================
 # CONFIGURACIÓN DE SEGMENTUMS — Cambiar estos valores para expandir
@@ -92,12 +93,15 @@ const SEG_COLORS := {
 }
 
 # Arcos angulares canónicos (grados Godot)
-# Para agregar un segmentum: agregar arco + ajustar los existentes
+# Godot: 0°=derecha, 90°=abajo, 180°=izquierda, 270°=arriba
+# Mapa W40K: norte=Obscurus(arriba), este=Ultima(derecha), sur=Tempestus(abajo), oeste=Pacificus(izquierda)
+# Conversión: godot_deg = map_deg - 90
+# Reloj: Obscurus=10h-1h, Ultima=1h-6h, Tempestus=6h-8h, Pacificus=8h-10h
 const SEG_ARCS := {
-	"obscurus":  {"start": 225.0, "end": 315.0, "arc": 90.0},
-	"ultima":    {"start": 315.0, "end": 470.0, "arc": 155.0},
-	"tempestus": {"start": 110.0, "end": 180.0, "arc": 70.0},
-	"pacificus": {"start": 180.0, "end": 225.0, "arc": 45.0},
+	"obscurus":  {"start": 220.0, "end": 310.0, "arc": 90.0},   # Norte (arriba)
+	"ultima":    {"start": 310.0, "end": 460.0, "arc": 150.0},   # Este+Sureste (el más grande, 1/3)
+	"tempestus": {"start": 100.0, "end": 160.0, "arc": 60.0},    # Sur (abajo)
+	"pacificus": {"start": 160.0, "end": 220.0, "arc": 60.0},    # Oeste (izquierda)
 }
 
 # =============================================================================
@@ -171,12 +175,14 @@ const SECTOR_CONFIG := {
 	},
 	# === SEGMENTUM ULTIMA (el más grande) ===
 	"ultima": {
+		# Posiciones como reloj: 1h-6h = map 30°-180°
+		# map_pos: [grados_mapa (0=norte/12h, 90=este/3h), fraccion_radio]
 		"ultramar": {
 			"nombre": "Sector Ultramar",
 			"lado_grieta": "sanctus",
 			"amenaza_mod": 35,
 			"warp_mod": 10,
-			"map_pos": [120.0, 0.68],
+			"map_pos": [90.0, 0.65],  # 3h, este — corazón de Ultramar
 			"subsectores": ["Macragge", "Espandor Reach", "Konor", "Tarsis", "Iax"],
 		},
 		"korianis": {
@@ -184,7 +190,7 @@ const SECTOR_CONFIG := {
 			"lado_grieta": "nihilus",
 			"amenaza_mod": 50,
 			"warp_mod": -15,
-			"map_pos": [55.0, 0.48],
+			"map_pos": [45.0, 0.50],  # 1:30h, noreste — zona Nihilus
 			"subsectores": ["Korianis Prime", "Lorn Expanse", "Aurelian", "Lithesh Reach"],
 		},
 		"octarius": {
@@ -192,7 +198,7 @@ const SECTOR_CONFIG := {
 			"lado_grieta": "nihilus",
 			"amenaza_mod": 75,
 			"warp_mod": -10,
-			"map_pos": [135.0, 0.42],
+			"map_pos": [110.0, 0.40],  # 3:40h, este-sureste cerca del centro
 			"subsectores": ["Octarius Core", "War Zone Periphery", "Grendel Stars"],
 		},
 		"damocles": {
@@ -200,7 +206,7 @@ const SECTOR_CONFIG := {
 			"lado_grieta": "sanctus",
 			"amenaza_mod": 40,
 			"warp_mod": 0,
-			"map_pos": [90.0, 0.72],
+			"map_pos": [75.0, 0.70],  # 2:30h, este — frontera T'au
 			"subsectores": ["Damocles Gulf", "Dal'yth Reach", "Perdus Rift", "Baal Reach"],
 		},
 		"jericho_reach": {
@@ -208,7 +214,7 @@ const SECTOR_CONFIG := {
 			"lado_grieta": "nihilus",
 			"amenaza_mod": 70,
 			"warp_mod": -20,
-			"map_pos": [92.0, 0.88],
+			"map_pos": [80.0, 0.90],  # 2:40h, borde este extremo
 			"subsectores": ["Hadex Anomaly", "Canis Salient", "Acheros Salient", "Orpheus Salient"],
 		},
 		"eastern_fringe": {
@@ -216,7 +222,7 @@ const SECTOR_CONFIG := {
 			"lado_grieta": "sanctus",
 			"amenaza_mod": 55,
 			"warp_mod": -5,
-			"map_pos": [105.0, 0.78],
+			"map_pos": [95.0, 0.80],  # 3:10h, borde este
 			"subsectores": ["Kar Duniash", "Ichar Reach", "Thandros", "Valedor Drift", "Solemnus Gate"],
 		},
 		"charadon": {
@@ -224,7 +230,7 @@ const SECTOR_CONFIG := {
 			"lado_grieta": "sanctus",
 			"amenaza_mod": 65,
 			"warp_mod": -10,
-			"map_pos": [148.0, 0.35],
+			"map_pos": [130.0, 0.35],  # 4:20h, sureste cerca del Maelstrom
 			"subsectores": ["Charadon Prime", "Metalica Approach", "Ryza Corridor", "Infernus Gate"],
 		},
 		"tau_sept": {
@@ -232,7 +238,7 @@ const SECTOR_CONFIG := {
 			"lado_grieta": "sanctus",
 			"amenaza_mod": 45,
 			"warp_mod": 0,
-			"map_pos": [78.0, 0.84],
+			"map_pos": [65.0, 0.85],  # 2:10h, borde este — territorio T'au
 			"subsectores": ["Dal'yth Sept", "Vior'la Reach", "Farsight Enclaves", "Startide Nexus"],
 		},
 		"nephilim": {
@@ -240,7 +246,7 @@ const SECTOR_CONFIG := {
 			"lado_grieta": "nihilus",
 			"amenaza_mod": 60,
 			"warp_mod": -15,
-			"map_pos": [62.0, 0.58],
+			"map_pos": [55.0, 0.55],  # 1:50h, noreste — Pariah Nexus
 			"subsectores": ["Nephilim Core", "Pariah Nexus", "Szarekhan Expanse"],
 		},
 		"ultima_macharia": {
@@ -248,7 +254,7 @@ const SECTOR_CONFIG := {
 			"lado_grieta": "sanctus",
 			"amenaza_mod": 40,
 			"warp_mod": 5,
-			"map_pos": [175.0, 0.55],
+			"map_pos": [155.0, 0.55],  # 5:10h, sureste — borde sur de Ultima
 			"subsectores": ["Macharia Reach", "Vostok Expanse", "Catachan Deeps", "Meridian Gate"],
 		},
 	},
