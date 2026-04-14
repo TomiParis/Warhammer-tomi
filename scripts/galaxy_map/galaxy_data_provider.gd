@@ -127,7 +127,7 @@ func calculate_all(galaxy: Dictionary) -> void:
 			break
 
 	# Posiciones canónicas
-	eye_of_terror_pos = _map_to_world(325.0, 0.65)
+	eye_of_terror_pos = _map_to_world(325.0, 0.60)
 
 	_build_warp_storms()
 	_build_enemy_territories()
@@ -191,18 +191,21 @@ func _build_segmentum_polygons() -> void:
 
 func _build_rift() -> void:
 	rift_points.clear()
-	# Trayectoria canónica: Ojo del Terror (map 325°) → Hadex Anomaly (map 95°)
-	# Pasa al NORTE de Terra
+	# Cicatrix Maledictum: Eye of Terror (NW) → Hadex Anomaly (E)
+	# Pasa al NORTE de Terra, bien separada (~15% del radio galáctico)
+	# En el mapa canónico cruza el tercio superior de la galaxia
 	var control_points: Array = [
-		_map_to_world(325.0, 0.70), # Origen: cerca del Ojo del Terror
-		_map_to_world(340.0, 0.52), # Corredor de Nachmund
-		_map_to_world(355.0, 0.35), # Se acerca a Terra por el norte
-		_map_to_world(10.0, 0.22),  # Punto más cercano a Terra
-		_map_to_world(30.0, 0.30),  # Entra en Ultima
-		_map_to_world(50.0, 0.42),  # Norte de Ultima
-		_map_to_world(70.0, 0.58),  # Se ensancha
-		_map_to_world(85.0, 0.72),  # Cerca del T'au
-		_map_to_world(95.0, 0.92),  # Terminus: Hadex Anomaly
+		_map_to_world(320.0, 0.75), # Origen: Ojo del Terror (NW)
+		_map_to_world(335.0, 0.58), # Corredor de Nachmund
+		_map_to_world(350.0, 0.40), # Norte de Solar
+		_map_to_world(5.0, 0.28),   # Pasa al norte de Terra
+		_map_to_world(20.0, 0.22),  # Punto más cercano a Terra (aún al norte)
+		_map_to_world(40.0, 0.30),  # Entra en Ultima norte
+		_map_to_world(55.0, 0.40),  # Norte de Ultima
+		_map_to_world(70.0, 0.52),  # Se ensancha hacia el este
+		_map_to_world(80.0, 0.65),  # Eastern Fringe
+		_map_to_world(90.0, 0.80),  # Cerca del T'au
+		_map_to_world(95.0, 0.95),  # Terminus: Hadex Anomaly (borde E)
 	]
 
 	for i: int in range(0, control_points.size() - 1):
@@ -425,44 +428,48 @@ func _build_enemy_territories() -> void:
 func _build_hive_fleet_vectors() -> void:
 	hive_fleet_vectors.clear()
 
-	# Behemoth: desde el este directo a Ultramar (map ~90°, destruida en Macragge)
-	var ultramar_pos: Vector2 = _map_to_world(120.0, 0.70)
+	# Behemoth: viene del ESTE puro (map 90°), directo a Ultramar (map 120°, 0.70)
+	# Primer contacto en 745.M41, destruida en la Batalla de Macragge
 	hive_fleet_vectors.append({
 		"nombre": "HIVE FLEET\nBEHEMOTH",
 		"points": PackedVector2Array([
-			_map_to_world(90.0, 1.15),
-			_map_to_world(95.0, 0.95),
-			_map_to_world(105.0, 0.82),
-			ultramar_pos + Vector2(200.0, 0.0),
+			_map_to_world(95.0, 1.20),  # Fuera de la galaxia, este
+			_map_to_world(95.0, 1.00),  # Borde galáctico este
+			_map_to_world(100.0, 0.85), # Eastern Fringe
+			_map_to_world(110.0, 0.75), # Hacia Ultramar
+			_map_to_world(118.0, 0.70), # Macragge
 		]),
-		"color": Color(0.7, 0.15, 0.5, 0.5),
+		"color": Color(0.8, 0.1, 0.45, 0.55),
 		"status": "DESTRUIDA",
 	})
 
-	# Kraken: desde el sureste, se dispersa (map ~150°)
+	# Kraken: viene del SURESTE (map ~140°), se dispersa en múltiples tendriles
+	# Segundo contacto en 992.M41, fragmentada pero activa
 	hive_fleet_vectors.append({
 		"nombre": "HIVE FLEET\nKRAKEN",
 		"points": PackedVector2Array([
-			_map_to_world(155.0, 1.15),
-			_map_to_world(145.0, 0.90),
-			_map_to_world(135.0, 0.70),
-			_map_to_world(125.0, 0.55),
+			_map_to_world(140.0, 1.20),  # Fuera de la galaxia, SE
+			_map_to_world(138.0, 1.00),  # Borde galáctico SE
+			_map_to_world(130.0, 0.80),  # Penetra el Eastern Fringe
+			_map_to_world(120.0, 0.60),  # Se dispersa
+			_map_to_world(110.0, 0.45),  # Hacia el interior
 		]),
-		"color": Color(0.6, 0.2, 0.5, 0.5),
+		"color": Color(0.6, 0.15, 0.55, 0.50),
 		"status": "FRAGMENTADA",
 	})
 
-	# Leviathan: desde abajo del plano (sur, map ~190°), la más peligrosa
+	# Leviathan: viene del SUR (map ~180°), ataque en tenaza desde abajo
+	# del plano galáctico. La más peligrosa, sigue ACTIVA
 	hive_fleet_vectors.append({
 		"nombre": "HIVE FLEET\nLEVIATHAN",
 		"points": PackedVector2Array([
-			_map_to_world(195.0, 1.15),
-			_map_to_world(190.0, 0.90),
-			_map_to_world(180.0, 0.70),
-			_map_to_world(165.0, 0.50),
-			_map_to_world(150.0, 0.35),
+			_map_to_world(185.0, 1.20),  # Debajo del plano galáctico
+			_map_to_world(183.0, 1.00),  # Borde sur
+			_map_to_world(178.0, 0.80),  # Penetra por el sur
+			_map_to_world(170.0, 0.60),  # Avanza al norte
+			_map_to_world(160.0, 0.40),  # Interior de Ultima sur
 		]),
-		"color": Color(0.8, 0.2, 0.3, 0.55),
+		"color": Color(0.85, 0.15, 0.2, 0.60),
 		"status": "ACTIVA",
 	})
 
