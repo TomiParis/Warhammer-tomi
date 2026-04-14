@@ -233,8 +233,9 @@ func _catmull_rom(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: float) 
 # =============================================================================
 
 func _calculate_sector_positions(galaxy: Dictionary) -> void:
-	# TODOS los sectores se posicionan relativos a TERRA_OFFSET
-	# porque los segmentae están centrados en Terra, no en el centro galáctico
+	# Buscar datos de la jerarquía original para map_pos
+	var hierarchy: Dictionary = GameData.GALAXY_HIERARCHY
+
 	for seg_key: String in galaxy["segmentae"]:
 		var seg: Dictionary = galaxy["segmentae"][seg_key]
 		var sectores: Dictionary = seg["sectores"]
@@ -245,33 +246,37 @@ func _calculate_sector_positions(galaxy: Dictionary) -> void:
 			var sec_key: String = str(sec_keys[i])
 			var full_key: String = seg_key + "." + sec_key
 
-			if seg_key == "solar":
-				# Solar: sectores en círculo alrededor de Terra, equidistantes
-				var angle: float = (float(i) / float(count)) * TAU + _rng.randf_range(-0.15, 0.15)
-				var dist: float = 350.0 + _rng.randf_range(-50.0, 80.0)
-				sector_positions[full_key] = TERRA_OFFSET + Vector2(cos(angle), sin(angle)) * dist
-			else:
-				# Segmentae exteriores: distribuir dentro de su arco angular
-				# El radio máximo VARÍA según la dirección (disco asimétrico desde Terra)
-				var arc: Dictionary = SEG_ARCS[seg_key]
-				var a_start_deg: float = float(arc["start"])
-				var a_end_deg: float = float(arc["end"])
+			# Buscar si el sector tiene posición canónica definida (map_pos)
+			var has_map_pos: bool = false
+			if hierarchy.has(seg_key):
+				var h_seg: Dictionary = hierarchy[seg_key]
+				if h_seg["sectores"].has(sec_key):
+					var h_sec: Dictionary = h_seg["sectores"][sec_key]
+					if h_sec.has("map_pos"):
+						var mp: Array = h_sec["map_pos"]
+						var jitter: Vector2 = Vector2(_rng.randf_range(-60.0, 60.0), _rng.randf_range(-60.0, 60.0))
+						sector_positions[full_key] = _map_to_world(float(mp[0]), float(mp[1])) + jitter
+						has_map_pos = true
 
-				var margin_deg: float = float(arc["arc"]) * 0.08
-				var usable_start: float = a_start_deg + margin_deg
-				var usable_end: float = a_end_deg - margin_deg
-
-				var t: float = (float(i) + 0.5) / float(count)
-				var angle_deg: float = lerpf(usable_start, usable_end, t) + _rng.randf_range(-3.0, 3.0)
-				var angle_rad: float = deg_to_rad(angle_deg)
-
-				# Radio variable: desde Solar hasta 80% del borde del disco en esa dirección
-				var edge_dist: float = _terra_to_disc_edge(angle_rad)
-				var inner: float = SOLAR_RADIUS * 1.3
-				var outer: float = edge_dist * 0.80
-				var dist: float = lerpf(inner, outer, 0.2 + t * 0.55) + _rng.randf_range(-100.0, 100.0)
-
-				sector_positions[full_key] = TERRA_OFFSET + Vector2(cos(angle_rad), sin(angle_rad)) * dist
+			if not has_map_pos:
+				if seg_key == "solar":
+					# Solar: sectores en círculo alrededor de Terra
+					var angle: float = (float(i) / float(count)) * TAU + _rng.randf_range(-0.15, 0.15)
+					var dist: float = 350.0 + _rng.randf_range(-50.0, 80.0)
+					sector_positions[full_key] = TERRA_OFFSET + Vector2(cos(angle), sin(angle)) * dist
+				else:
+					# Algoritmo genérico para sectores sin map_pos
+					var arc: Dictionary = SEG_ARCS[seg_key]
+					var a_start_deg: float = float(arc["start"])
+					var a_end_deg: float = float(arc["end"])
+					var margin_deg: float = float(arc["arc"]) * 0.08
+					var t: float = (float(i) + 0.5) / float(count)
+					var angle_deg: float = lerpf(a_start_deg + margin_deg, a_end_deg - margin_deg, t)
+					var angle_rad: float = deg_to_rad(angle_deg + _rng.randf_range(-3.0, 3.0))
+					var edge_dist: float = _terra_to_disc_edge(angle_rad)
+					var dist: float = lerpf(SOLAR_RADIUS * 1.3, edge_dist * 0.80, 0.2 + t * 0.55)
+					dist += _rng.randf_range(-100.0, 100.0)
+					sector_positions[full_key] = TERRA_OFFSET + Vector2(cos(angle_rad), sin(angle_rad)) * dist
 
 			# Radio proporcional a planetas
 			var planet_count: int = 0

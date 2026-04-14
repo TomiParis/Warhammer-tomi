@@ -398,12 +398,15 @@ const GALAXY_HIERARCHY := {
 		"nombre": "Segmentum Ultima",
 		"descripcion": "Este galáctico, el más grande (~1/3 de la galaxia). Ultramar, frontera T'au, Tiránidos, Necrones.",
 		"fortaleza": "Kar Duniash",
+		# map_pos: [grados_mapa, fraccion_radio] — posición canónica de cada sector
+		# map 0°=norte, 90°=este, 180°=sur. Ultima abarca map 45°-200°
 		"sectores": {
 			"ultramar": {
 				"nombre": "Sector Ultramar",
 				"lado_grieta": "sanctus",
 				"amenaza_mod": 35,
 				"warp_mod": 10,
+				"map_pos": [120.0, 0.68],
 				"subsectores": ["Macragge", "Espandor Reach", "Konor", "Tarsis", "Iax"],
 			},
 			"korianis": {
@@ -411,6 +414,7 @@ const GALAXY_HIERARCHY := {
 				"lado_grieta": "nihilus",
 				"amenaza_mod": 50,
 				"warp_mod": -15,
+				"map_pos": [55.0, 0.48],
 				"subsectores": ["Korianis Prime", "Lorn Expanse", "Aurelian", "Lithesh Reach"],
 			},
 			"octarius": {
@@ -418,6 +422,7 @@ const GALAXY_HIERARCHY := {
 				"lado_grieta": "nihilus",
 				"amenaza_mod": 75,
 				"warp_mod": -10,
+				"map_pos": [135.0, 0.42],
 				"subsectores": ["Octarius Core", "War Zone Periphery", "Grendel Stars"],
 			},
 			"damocles": {
@@ -425,14 +430,15 @@ const GALAXY_HIERARCHY := {
 				"lado_grieta": "sanctus",
 				"amenaza_mod": 40,
 				"warp_mod": 0,
+				"map_pos": [90.0, 0.72],
 				"subsectores": ["Damocles Gulf", "Dal'yth Reach", "Perdus Rift", "Baal Reach"],
 			},
-			# --- SECTORES NUEVOS (canónicos y lore-accurate) ---
 			"jericho_reach": {
 				"nombre": "Sector Jericho Reach",
 				"lado_grieta": "nihilus",
 				"amenaza_mod": 70,
 				"warp_mod": -20,
+				"map_pos": [92.0, 0.88],
 				"subsectores": ["Hadex Anomaly", "Canis Salient", "Acheros Salient", "Orpheus Salient"],
 			},
 			"eastern_fringe": {
@@ -440,6 +446,7 @@ const GALAXY_HIERARCHY := {
 				"lado_grieta": "sanctus",
 				"amenaza_mod": 55,
 				"warp_mod": -5,
+				"map_pos": [105.0, 0.78],
 				"subsectores": ["Kar Duniash", "Ichar Reach", "Thandros", "Valedor Drift", "Solemnus Gate"],
 			},
 			"charadon": {
@@ -447,6 +454,7 @@ const GALAXY_HIERARCHY := {
 				"lado_grieta": "sanctus",
 				"amenaza_mod": 65,
 				"warp_mod": -10,
+				"map_pos": [148.0, 0.35],
 				"subsectores": ["Charadon Prime", "Metalica Approach", "Ryza Corridor", "Infernus Gate"],
 			},
 			"tau_sept": {
@@ -454,6 +462,7 @@ const GALAXY_HIERARCHY := {
 				"lado_grieta": "sanctus",
 				"amenaza_mod": 45,
 				"warp_mod": 0,
+				"map_pos": [78.0, 0.84],
 				"subsectores": ["Dal'yth Sept", "Vior'la Reach", "Farsight Enclaves", "Startide Nexus"],
 			},
 			"nephilim": {
@@ -461,6 +470,7 @@ const GALAXY_HIERARCHY := {
 				"lado_grieta": "nihilus",
 				"amenaza_mod": 60,
 				"warp_mod": -15,
+				"map_pos": [62.0, 0.58],
 				"subsectores": ["Nephilim Core", "Pariah Nexus", "Szarekhan Expanse"],
 			},
 			"ultima_macharia": {
@@ -468,6 +478,7 @@ const GALAXY_HIERARCHY := {
 				"lado_grieta": "sanctus",
 				"amenaza_mod": 40,
 				"warp_mod": 5,
+				"map_pos": [175.0, 0.55],
 				"subsectores": ["Macharia Reach", "Vostok Expanse", "Catachan Deeps", "Meridian Gate"],
 			},
 		},
