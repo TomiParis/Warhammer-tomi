@@ -157,8 +157,8 @@ func _check_state_transition() -> void:
 
 	match current_state:
 		MapState.SECTOR:
-			# Alejar desde sector: volver a segmentum
-			if _target_zoom < seg_zoom * 1.5:
+			# Alejar desde sector: volver a segmentum (umbral más sensible)
+			if _target_zoom < seg_zoom * 3.0:
 				_enter_segmentum(selected_segmentum)
 		MapState.SEGMENTUM:
 			# Acercar: entrar a sector
