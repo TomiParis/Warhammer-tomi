@@ -19,14 +19,12 @@ func _ready() -> void:
 	style.content_margin_bottom = 8.0
 	add_theme_stylebox_override("panel", style)
 
-	# Posición: izquierda, debajo de la lista de flotas
+	# Posición: izquierda, debajo de la lista, mismo ancho
 	anchor_left = 0.0
 	anchor_top = 0.0
-	anchor_bottom = 1.0
 	offset_left = 5.0
-	offset_top = 320.0
-	offset_right = 200.0
-	offset_bottom = -5.0
+	offset_top = 315.0
+	custom_minimum_size = Vector2(190, 300)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -165,10 +163,10 @@ func _build_transport_text(fleet_data: Dictionary) -> String:
 	return t
 
 func _stat_line(label: String, value: int) -> String:
-	var filled: int = floori(float(value) / 5.0)
-	var empty: int = 20 - filled
+	var filled: int = floori(float(value) / 10.0)
+	var empty: int = 10 - filled
 	var col: String = "6b8c5a" if value >= 60 else ("c09a40" if value >= 30 else "8c5a5a")
-	return " [color=#807a6b]%-12s[/color] [color=#%s]%s[/color][color=#333]%s[/color] %d\n" % [
+	return " [color=#807a6b]%s[/color] [color=#%s]%s[/color][color=#333]%s[/color] %d\n" % [
 		label, col, "█".repeat(filled), "░".repeat(empty), value]
 
 func _fmt_num(n: int) -> String:
