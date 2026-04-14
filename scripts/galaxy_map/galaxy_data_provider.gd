@@ -549,13 +549,14 @@ func find_sector_at(world_pos: Vector2, seg_key: String) -> String:
 	return best_key
 
 func find_sector_at_within_radius(world_pos: Vector2, seg_key: String) -> String:
-	# Solo retorna un sector si el click cae DENTRO de su radio
+	# Retorna el sector más cercano si el click cae razonablemente cerca
+	# Usa radio × 2.0 como tolerancia para segmentums grandes
 	var best_dist: float = INF
 	var best_key: String = ""
 	for full_key: String in sector_positions:
 		if full_key.begins_with(seg_key + "."):
 			var pos: Vector2 = sector_positions[full_key]
-			var radius: float = float(sector_radii.get(full_key, 150.0))
+			var radius: float = float(sector_radii.get(full_key, 150.0)) * 2.0
 			var dist: float = world_pos.distance_to(pos)
 			if dist < radius and dist < best_dist:
 				best_dist = dist
