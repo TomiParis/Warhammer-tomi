@@ -153,24 +153,24 @@ func _unhandled_input(event: InputEvent) -> void:
 # =============================================================================
 
 func _check_state_transition() -> void:
-	# Transición automática basada en zoom level
 	var seg_zoom: float = _calc_segmentum_zoom(selected_segmentum) if selected_segmentum != "" else ZOOM_SEGMENTUM
+
 	match current_state:
-		MapState.GALAXY:
-			if _target_zoom > ZOOM_GALAXY * 2.5:
-				var seg: String = data_provider.find_segmentum_at(camera.position)
-				if seg != "":
-					_enter_segmentum(seg)
+		MapState.SECTOR:
+			# Alejar desde sector: volver a segmentum
+			if _target_zoom < seg_zoom * 1.5:
+				_enter_segmentum(selected_segmentum)
 		MapState.SEGMENTUM:
-			if _target_zoom > seg_zoom * 4.0 and selected_segmentum != "":
+			# Acercar: entrar a sector
+			if _target_zoom > seg_zoom * 5.0 and selected_segmentum != "":
 				var sec: String = data_provider.find_sector_at(camera.position, selected_segmentum)
 				if sec != "":
 					_enter_sector(sec)
-			elif _target_zoom < ZOOM_GALAXY * 1.5:
+			# Alejar: volver a galaxia
+			elif _target_zoom < ZOOM_GALAXY * 1.8:
 				_enter_galaxy()
-		MapState.SECTOR:
-			if _target_zoom < seg_zoom * 0.7:
-				_enter_segmentum(selected_segmentum)
+		MapState.GALAXY:
+			pass # Solo se entra a segmentum por click, no por zoom
 
 func _handle_click(screen_pos: Vector2) -> void:
 	var world_pos: Vector2 = _screen_to_world(screen_pos)
