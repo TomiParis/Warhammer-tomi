@@ -1,0 +1,336 @@
+## galaxy_map.gd - Controller principal del mapa galáctico
+## Maneja Camera2D, input, state machine y coordinación general
+extends Node2D
+
+# === ESTADOS ===
+enum MapState { GALAXY, SEGMENTUM, SECTOR }
+
+# === ZOOM LEVELS ===
+const ZOOM_GALAXY: float = 0.065
+const ZOOM_SEGMENTUM: float = 0.25
+const ZOOM_SECTOR: float = 1.8
+const ZOOM_MIN: float = 0.04
+const ZOOM_MAX: float = 4.0
+const ZOOM_SPEED: float = 0.1
+const PAN_SPEED: float = 1.0
+
+# === NODOS ===
+@onready var camera: Camera2D = $Camera2D
+@onready var renderer: Node2D = $GalaxyRenderer
+@onready var ui_layer: CanvasLayer = $UILayer
+@onready var breadcrumb: HBoxContainer = $UILayer/Breadcrumb
+@onready var tooltip: PanelContainer = $UILayer/Tooltip
+@onready var info_panel: PanelContainer = $UILayer/PlanetInfoPanel
+@onready var search_panel: PanelContainer = $UILayer/SearchPanel
+@onready var filter_panel: PanelContainer = $UILayer/FilterPanel
+@onready var minimap_container: Control = $UILayer/Minimap
+
+# === DATOS ===
+var galaxy: Dictionary = {}
+var data_provider: GalaxyDataProvider = GalaxyDataProvider.new()
+var current_state: MapState = MapState.GALAXY
+var selected_segmentum: String = ""
+var selected_sector: String = "" # "seg.sec"
+var selected_planet: Dictionary = {}
+var hovered_planet: Dictionary = {}
+
+# === INPUT ===
+var _is_panning: bool = false
+var _pan_start: Vector2 = Vector2.ZERO
+var _current_zoom: float = ZOOM_GALAXY
+var _target_zoom: float = ZOOM_GALAXY
+var _is_transitioning: bool = false
+
+# === FILTROS ===
+var active_filters: Dictionary = {} # tipo -> bool, lado -> bool, etc.
+var filter_dimmed_ids: Dictionary = {} # planet_id -> true si atenuado
+
+func _ready() -> void:
+	# Generar la galaxia
+	var generator: PlanetGenerator = PlanetGenerator.new()
+	galaxy = generator.generate_galaxy(42)
+
+	# Calcular posiciones
+	data_provider.calculate_all(galaxy)
+
+	# Configurar cámara
+	camera.zoom = Vector2(ZOOM_GALAXY, ZOOM_GALAXY)
+	_current_zoom = ZOOM_GALAXY
+	_target_zoom = ZOOM_GALAXY
+	camera.position = Vector2.ZERO
+
+	# Pasar datos al renderer
+	renderer.setup(galaxy, data_provider, self)
+
+	# Inicializar UI
+	_setup_ui()
+
+	# Informar al renderer del estado inicial
+	renderer.set_state(MapState.GALAXY, "", "")
+
+func _setup_ui() -> void:
+	# Inicializar componentes UI
+	if breadcrumb and breadcrumb.has_method("setup"):
+		breadcrumb.setup(self)
+	if info_panel:
+		info_panel.visible = false
+	if search_panel:
+		search_panel.visible = false
+		if search_panel.has_method("setup"):
+			search_panel.setup(self)
+	if tooltip:
+		tooltip.visible = false
+	if filter_panel and filter_panel.has_method("setup"):
+		filter_panel.setup(self)
+	if minimap_container and minimap_container.has_method("setup"):
+		minimap_container.setup(self, data_provider)
+
+func _process(delta: float) -> void:
+	# Zoom suave (solo cuando NO hay tween activo)
+	if not _is_transitioning and absf(_current_zoom - _target_zoom) > 0.001:
+		_current_zoom = lerpf(_current_zoom, _target_zoom, delta * 8.0)
+		camera.zoom = Vector2(_current_zoom, _current_zoom)
+		renderer.queue_redraw()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _is_transitioning:
+		return
+
+	# --- ZOOM con scroll ---
+	if event is InputEventMouseButton:
+		var mb: InputEventMouseButton = event
+		if mb.pressed:
+			if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
+				_target_zoom = clampf(_target_zoom * 1.15, ZOOM_MIN, ZOOM_MAX)
+				_check_state_transition()
+				get_viewport().set_input_as_handled()
+			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				_target_zoom = clampf(_target_zoom / 1.15, ZOOM_MIN, ZOOM_MAX)
+				_check_state_transition()
+				get_viewport().set_input_as_handled()
+
+			# --- PAN con click derecho ---
+			elif mb.button_index == MOUSE_BUTTON_RIGHT:
+				_is_panning = true
+				_pan_start = mb.position
+				get_viewport().set_input_as_handled()
+
+			# --- SELECCIÓN con click izquierdo ---
+			elif mb.button_index == MOUSE_BUTTON_LEFT:
+				_handle_click(mb.global_position)
+				get_viewport().set_input_as_handled()
+
+		elif not mb.pressed:
+			if mb.button_index == MOUSE_BUTTON_RIGHT:
+				_is_panning = false
+
+	# --- PAN arrastrando ---
+	if event is InputEventMouseMotion:
+		var mm: InputEventMouseMotion = event
+		if _is_panning:
+			var delta_pan: Vector2 = -mm.relative / _current_zoom * PAN_SPEED
+			camera.position += delta_pan
+			renderer.queue_redraw()
+		else:
+			# Hover para tooltip
+			_handle_hover(mm.position)
+
+	# --- ATAJOS ---
+	if event is InputEventKey:
+		var key: InputEventKey = event
+		if key.pressed:
+			# Ctrl+F para buscar
+			if key.keycode == KEY_F and key.ctrl_pressed:
+				_toggle_search()
+				get_viewport().set_input_as_handled()
+			# Escape para volver
+			elif key.keycode == KEY_ESCAPE:
+				_go_back()
+				get_viewport().set_input_as_handled()
+
+# =============================================================================
+# TRANSICIONES ENTRE CAPAS
+# =============================================================================
+
+func _check_state_transition() -> void:
+	# Transición automática basada en zoom level
+	match current_state:
+		MapState.GALAXY:
+			if _target_zoom > ZOOM_GALAXY * 2.5:
+				# Determinar qué segmentum está centrado
+				var seg: String = data_provider.find_segmentum_at(camera.position)
+				if seg != "":
+					_enter_segmentum(seg)
+		MapState.SEGMENTUM:
+			if _target_zoom > ZOOM_SEGMENTUM * 3.0 and selected_segmentum != "":
+				var sec: String = data_provider.find_sector_at(camera.position, selected_segmentum)
+				if sec != "":
+					_enter_sector(sec)
+			elif _target_zoom < ZOOM_GALAXY * 1.5:
+				_enter_galaxy()
+		MapState.SECTOR:
+			if _target_zoom < ZOOM_SEGMENTUM * 0.7:
+				_enter_segmentum(selected_segmentum)
+
+func _handle_click(screen_pos: Vector2) -> void:
+	var world_pos: Vector2 = _screen_to_world(screen_pos)
+
+	match current_state:
+		MapState.GALAXY:
+			var seg: String = data_provider.find_segmentum_at(world_pos)
+			if seg != "":
+				navigate_to_segmentum(seg)
+
+		MapState.SEGMENTUM:
+			var sec: String = data_provider.find_sector_at(world_pos, selected_segmentum)
+			if sec != "":
+				navigate_to_sector(sec)
+
+		MapState.SECTOR:
+			var planet: Dictionary = data_provider.find_planet_at(
+				world_pos, selected_sector, galaxy, 20.0 / _current_zoom
+			)
+			if not planet.is_empty():
+				select_planet(planet)
+			else:
+				deselect_planet()
+
+func _handle_hover(screen_pos: Vector2) -> void:
+	if current_state != MapState.SECTOR:
+		if tooltip:
+			tooltip.visible = false
+		return
+
+	var world_pos: Vector2 = _screen_to_world(screen_pos)
+	var planet: Dictionary = data_provider.find_planet_at(
+		world_pos, selected_sector, galaxy, 20.0 / _current_zoom
+	)
+
+	if not planet.is_empty() and tooltip and tooltip.has_method("show_planet"):
+		hovered_planet = planet
+		tooltip.show_planet(planet, screen_pos)
+	elif tooltip:
+		tooltip.visible = false
+		hovered_planet = {}
+
+func _screen_to_world(screen_pos: Vector2) -> Vector2:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var cam_pos: Vector2 = camera.global_position
+	var offset: Vector2 = (screen_pos - viewport_size / 2.0) / _current_zoom
+	return cam_pos + offset
+
+# =============================================================================
+# NAVEGACIÓN PÚBLICA (llamada desde UI)
+# =============================================================================
+
+func navigate_to_segmentum(seg_key: String) -> void:
+	var target_pos: Vector2 = data_provider.segmentum_centers.get(seg_key, Vector2.ZERO)
+	_animate_to(target_pos, ZOOM_SEGMENTUM, func() -> void: _enter_segmentum(seg_key))
+
+func navigate_to_sector(sector_full_key: String) -> void:
+	var target_pos: Vector2 = data_provider.sector_positions.get(sector_full_key, Vector2.ZERO)
+	_animate_to(target_pos, ZOOM_SECTOR, func() -> void: _enter_sector(sector_full_key))
+
+func navigate_to_planet(planet: Dictionary) -> void:
+	var pid: int = int(planet["id"])
+	var pos: Vector2 = data_provider.planet_positions.get(pid, Vector2.ZERO)
+	var seg: String = str(planet["segmentum"])
+	var sec: String = seg + "." + str(planet["sector"])
+
+	# Navegar por capas hasta llegar al planeta
+	selected_segmentum = seg
+	selected_sector = sec
+	_animate_to(pos, ZOOM_SECTOR * 1.5, func() -> void:
+		_enter_sector(sec)
+		select_planet(planet)
+	)
+
+func navigate_to_galaxy() -> void:
+	_animate_to(Vector2.ZERO, ZOOM_GALAXY, func() -> void: _enter_galaxy())
+
+func _go_back() -> void:
+	match current_state:
+		MapState.SECTOR:
+			navigate_to_segmentum(selected_segmentum)
+		MapState.SEGMENTUM:
+			navigate_to_galaxy()
+		MapState.GALAXY:
+			pass # Ya estamos en el nivel más alto
+
+func select_planet(planet: Dictionary) -> void:
+	selected_planet = planet
+	if info_panel and info_panel.has_method("show_planet"):
+		info_panel.show_planet(planet)
+		info_panel.visible = true
+	renderer.queue_redraw()
+
+func deselect_planet() -> void:
+	selected_planet = {}
+	if info_panel:
+		info_panel.visible = false
+	renderer.queue_redraw()
+
+func _toggle_search() -> void:
+	if search_panel:
+		search_panel.visible = not search_panel.visible
+		if search_panel.visible and search_panel.has_method("focus_search"):
+			search_panel.focus_search()
+
+# =============================================================================
+# CAMBIOS DE ESTADO INTERNOS
+# =============================================================================
+
+func _enter_galaxy() -> void:
+	current_state = MapState.GALAXY
+	selected_segmentum = ""
+	selected_sector = ""
+	deselect_planet()
+	renderer.set_state(MapState.GALAXY, "", "")
+	_update_breadcrumb()
+
+func _enter_segmentum(seg_key: String) -> void:
+	current_state = MapState.SEGMENTUM
+	selected_segmentum = seg_key
+	selected_sector = ""
+	deselect_planet()
+	renderer.set_state(MapState.SEGMENTUM, seg_key, "")
+	_update_breadcrumb()
+
+func _enter_sector(sector_full_key: String) -> void:
+	current_state = MapState.SECTOR
+	var parts: PackedStringArray = sector_full_key.split(".")
+	if parts.size() >= 2:
+		selected_segmentum = parts[0]
+	selected_sector = sector_full_key
+	renderer.set_state(MapState.SECTOR, selected_segmentum, sector_full_key)
+	_update_breadcrumb()
+
+func _update_breadcrumb() -> void:
+	if breadcrumb and breadcrumb.has_method("update_path"):
+		breadcrumb.update_path(current_state, selected_segmentum, selected_sector, galaxy)
+
+# =============================================================================
+# ANIMACIÓN
+# =============================================================================
+
+func _animate_to(target_pos: Vector2, target_zoom_val: float, on_complete: Callable) -> void:
+	_is_transitioning = true
+	_target_zoom = target_zoom_val
+
+	var tween: Tween = create_tween()
+	tween.set_parallel(true)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_CUBIC)
+
+	tween.tween_property(camera, "position", target_pos, 0.4)
+	# Tweenar zoom visual directamente via método (camera.zoom + variable interna)
+	tween.tween_method(func(val: float) -> void:
+		_current_zoom = val
+		camera.zoom = Vector2(val, val)
+		renderer.queue_redraw()
+	, _current_zoom, target_zoom_val, 0.4)
+
+	tween.chain().tween_callback(func() -> void:
+		_is_transitioning = false
+		on_complete.call()
+	)
