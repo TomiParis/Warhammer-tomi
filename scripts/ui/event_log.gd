@@ -11,12 +11,12 @@ var _active_category_filter: int = -1 # -1 = todas
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: bottom-center
-	anchor_left = 0.15
-	anchor_right = 0.85
+	# Posición: bottom-center, más compacto
+	anchor_left = 0.12
+	anchor_right = 0.70
 	anchor_top = 1.0
 	anchor_bottom = 1.0
-	offset_top = -200.0
+	offset_top = -150.0
 	offset_bottom = -5.0
 
 	# Estilo

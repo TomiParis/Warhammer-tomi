@@ -12,14 +12,14 @@ var _showing_resumen: bool = false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: abajo-derecha, compacto
+	# Posición: abajo-derecha, solo controles (sin resumen)
 	anchor_left = 1.0
 	anchor_right = 1.0
 	anchor_top = 1.0
 	anchor_bottom = 1.0
 	offset_left = -300.0
 	offset_right = -5.0
-	offset_top = -210.0
+	offset_top = -55.0
 	offset_bottom = -5.0
 
 	# Estilo
@@ -108,23 +108,43 @@ func _ready() -> void:
 		sb.pressed.connect(func() -> void: _set_speed(cap))
 		row2.add_child(sb)
 
-	# Separador
-	var sep: HSeparator = HSeparator.new()
-	sep.add_theme_constant_override("separation", 2)
-	vbox.add_child(sep)
-
-	# Resumen (scrolleable, ocupa el espacio restante)
+	# Resumen flotante (se crea como hijo del padre UILayer, se abre hacia arriba)
 	_resumen_content = RichTextLabel.new()
 	_resumen_content.bbcode_enabled = true
 	_resumen_content.fit_content = false
 	_resumen_content.scroll_active = true
-	_resumen_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_resumen_content.add_theme_color_override("default_color", Color(0.55, 0.52, 0.46))
-	_resumen_content.add_theme_font_size_override("normal_font_size", 10)
-	vbox.add_child(_resumen_content)
-
-	_update_resumen_idle()
+	_resumen_content.add_theme_color_override("default_color", Color(0.58, 0.55, 0.48))
+	_resumen_content.add_theme_font_size_override("normal_font_size", 11)
+	call_deferred("_setup_resumen")
 	call_deferred("_connect_signals")
+
+var _resumen_panel: PanelContainer = null
+
+func _setup_resumen() -> void:
+	var parent_node: Node = get_parent()
+	if parent_node == null:
+		return
+	_resumen_panel = PanelContainer.new()
+	_resumen_panel.visible = false
+	_resumen_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.bg_color = Color(0.03, 0.03, 0.06, 0.92)
+	s.border_color = Color(0.45, 0.42, 0.3, 0.2)
+	s.set_border_width_all(1)
+	s.set_corner_radius_all(3)
+	s.set_content_margin_all(8)
+	_resumen_panel.add_theme_stylebox_override("panel", s)
+	_resumen_panel.anchor_left = 1.0
+	_resumen_panel.anchor_right = 1.0
+	_resumen_panel.anchor_top = 1.0
+	_resumen_panel.anchor_bottom = 1.0
+	_resumen_panel.offset_left = -420.0
+	_resumen_panel.offset_right = -5.0
+	_resumen_panel.offset_top = -310.0
+	_resumen_panel.offset_bottom = -60.0
+	_resumen_panel.add_child(_resumen_content)
+	_resumen_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent_node.add_child(_resumen_panel)
 
 func _connect_signals() -> void:
 	var ts: Node = get_node_or_null("/root/TurnSystem")
@@ -135,9 +155,21 @@ func _connect_signals() -> void:
 			ts.fecha_cambiada.connect(_on_fecha_cambiada)
 
 func _on_turno_pressed() -> void:
+	if _showing_resumen:
+		_showing_resumen = false
+		if _resumen_panel:
+			_resumen_panel.visible = false
+		_turno_btn.text = "SIGUIENTE TURNO"
+		return
+
 	var ts: Node = get_node_or_null("/root/TurnSystem")
 	if ts and ts.has_method("ejecutar_turno"):
 		ts.ejecutar_turno()
+		# Mostrar resumen post-turno
+		_showing_resumen = true
+		_turno_btn.text = "OCULTAR"
+		if _resumen_panel:
+			_resumen_panel.visible = true
 
 func _on_auto_toggled(pressed: bool) -> void:
 	var ts: Node = get_node_or_null("/root/TurnSystem")
@@ -172,11 +204,6 @@ func _on_turno_completado(resumen: Dictionary) -> void:
 	var ts: Node = get_node_or_null("/root/TurnSystem")
 	if ts and not ts.auto_turno and _auto_btn:
 		_auto_btn.set_pressed_no_signal(false)
-
-func _update_resumen_idle() -> void:
-	if _resumen_content == null:
-		return
-	_resumen_content.text = "[color=#605a4a]Presiona SIGUIENTE TURNO para avanzar.[/color]"
 
 func _update_resumen_post(resumen: Dictionary) -> void:
 	if _resumen_content == null:
