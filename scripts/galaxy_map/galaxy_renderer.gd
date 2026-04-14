@@ -325,16 +325,13 @@ func _draw_segmentum_layer() -> void:
 	var seg: Dictionary = _galaxy["segmentae"][_seg_key]
 	var sectores: Dictionary = seg["sectores"]
 
-	# Fondo del segmentum (polígono suave)
+	# Fondo del segmentum (polígono más visible que en capa 1)
 	if _dp.segmentum_polygons.has(_seg_key):
 		var poly: PackedVector2Array = _dp.segmentum_polygons[_seg_key]
 		var color: Color = GalaxyDataProvider.SEG_COLORS.get(_seg_key, Color(0.3, 0.3, 0.3, 0.1))
-		draw_colored_polygon(poly, Color(color.r, color.g, color.b, 0.06))
+		draw_colored_polygon(poly, Color(color.r, color.g, color.b, 0.08))
 
-	# Gran Grieta (siempre visible)
-	_draw_rift()
-
-	# Dibujar sectores
+	# Dibujar sectores (tamaños escalados para zoom ~0.25)
 	for sec_key: String in sectores:
 		var full_key: String = _seg_key + "." + sec_key
 		if not _dp.sector_positions.has(full_key):
@@ -345,41 +342,44 @@ func _draw_segmentum_layer() -> void:
 		var radius: float = float(_dp.sector_radii[full_key])
 		var lado: String = str(sec["lado_grieta"])
 
-		# Área del sector (círculo con borde punteado)
+		# Relleno del sector
+		var seg_col: Color = GalaxyDataProvider.SEG_COLORS.get(_seg_key, Color(0.3, 0.3, 0.3))
+		_draw_filled_circle(pos, radius, Color(seg_col.r, seg_col.g, seg_col.b, 0.05))
+
+		# Borde punteado del sector (grosor visible a zoom 0.25)
 		var sector_color: Color = C_SECTOR_BORDER
 		if lado == "nihilus":
-			sector_color = Color(0.4, 0.2, 0.2, 0.2)
+			sector_color = Color(0.4, 0.2, 0.2, 0.25)
+		_draw_dashed_circle(pos, radius, sector_color, 4.0)
 
-		_draw_dashed_circle(pos, radius, sector_color, 1.5)
-
-		# Puntos de densidad (representan planetas sin ser individuales)
+		# Puntos de densidad
 		_draw_density_dots(sec, pos, radius)
 
-		# Label del sector
+		# Nombre del sector (tamaño mundo, no pixels)
 		var sec_name: String = str(sec["nombre"])
-		_draw_label(pos + Vector2(0.0, -radius - 15.0), sec_name, C_LABEL, 13)
+		_draw_label(pos + Vector2(0.0, -20.0), sec_name, C_LABEL, 45)
 
-		# Indicadores
+		# Cantidad de planetas
 		var planet_count: int = _count_sector_planets(sec)
-		_draw_label(pos + Vector2(0.0, radius + 15.0),
-			str(planet_count) + " mundos", C_LABEL_DIM, 9)
+		_draw_label(pos + Vector2(0.0, 30.0), str(planet_count) + " mundos", C_LABEL_DIM, 28)
 
-		var lado_label: String = "[SANCTUS]" if lado == "sanctus" else "[NIHILUS]"
-		var lado_color: Color = Color(0.4, 0.5, 0.35, 0.4) if lado == "sanctus" else Color(0.5, 0.3, 0.25, 0.4)
-		_draw_label(pos + Vector2(0.0, radius + 28.0), lado_label, lado_color, 8)
+		# Sanctus/Nihilus badge
+		var lado_label: String = "SANCTUS" if lado == "sanctus" else "NIHILUS"
+		var lado_color: Color = Color(0.4, 0.5, 0.35, 0.35) if lado == "sanctus" else Color(0.5, 0.3, 0.25, 0.35)
+		_draw_label(pos + Vector2(0.0, 60.0), lado_label, lado_color, 22)
 
-	# Rutas warp entre sectores (curvas tenues)
+	# Rutas warp entre sectores (grosor visible)
 	var sec_keys: Array = sectores.keys()
 	for i: int in sec_keys.size():
 		for j: int in range(i + 1, sec_keys.size()):
 			var key_a: String = _seg_key + "." + str(sec_keys[i])
 			var key_b: String = _seg_key + "." + str(sec_keys[j])
 			if _dp.sector_positions.has(key_a) and _dp.sector_positions.has(key_b):
-				_draw_warp_route(_dp.sector_positions[key_a], _dp.sector_positions[key_b])
+				_draw_warp_route_thick(_dp.sector_positions[key_a], _dp.sector_positions[key_b], 3.0)
 
 	# Título del segmentum
-	_draw_label(_dp.segmentum_centers[_seg_key] + Vector2(0.0, -800.0),
-		str(seg["nombre"]).to_upper(), C_LABEL, 16)
+	_draw_label(_dp.segmentum_centers[_seg_key] + Vector2(0.0, -900.0),
+		str(seg["nombre"]).to_upper(), C_LABEL, 80)
 
 func _draw_density_dots(sec: Dictionary, center: Vector2, radius: float) -> void:
 	var sub_dict: Dictionary = sec["subsectores"]
@@ -390,13 +390,12 @@ func _draw_density_dots(sec: Dictionary, center: Vector2, radius: float) -> void
 		var sub: Dictionary = sub_dict[sub_key]
 		var planetas: Array = sub["planetas"]
 		var count: int = planetas.size()
-		# Dibujar puntos representativos (no todos, ~30% para densidad visual)
 		var dots: int = maxi(count / 3, 2)
 		for d: int in dots:
 			var angle: float = rng_local.randf_range(0.0, TAU)
-			var dist: float = rng_local.randf_range(10.0, radius * 0.8)
+			var dist: float = rng_local.randf_range(15.0, radius * 0.75)
 			var dot_pos: Vector2 = center + Vector2(cos(angle), sin(angle)) * dist
-			draw_circle(dot_pos, 2.0, Color(0.6, 0.58, 0.5, 0.25))
+			draw_circle(dot_pos, 5.0, Color(0.6, 0.58, 0.5, 0.2))
 
 # =============================================================================
 # CAPA 3: VISTA DE SECTOR
@@ -419,11 +418,13 @@ func _draw_sector_layer() -> void:
 		return
 	var sec: Dictionary = seg["sectores"][sec_key]
 
-	# Fondo del sector
 	var sec_pos: Vector2 = _dp.sector_positions.get(_sec_key, Vector2.ZERO)
 	var sec_radius: float = float(_dp.sector_radii.get(_sec_key, 200.0))
 
-	# Dibujar subsectores
+	# Borde del sector actual (highlight)
+	_draw_circle_outline(sec_pos, sec_radius, Color(0.6, 0.55, 0.3, 0.15), 2.0)
+
+	# Dibujar subsectores (tamaños para zoom ~1.8)
 	var sub_dict: Dictionary = sec["subsectores"]
 	for sub_key: String in sub_dict:
 		var sub: Dictionary = sub_dict[sub_key]
@@ -433,17 +434,16 @@ func _draw_sector_layer() -> void:
 
 		var sub_pos: Vector2 = _dp.subsector_positions[full_sub]
 
-		# Área del subsector
+		# Área del subsector (borde punteado)
 		_draw_dashed_circle(sub_pos, 70.0, C_SUBSECTOR_BORDER, 1.0)
 
 		# Label del subsector
-		_draw_label(sub_pos + Vector2(0.0, -80.0), str(sub["nombre"]), C_LABEL_DIM, 9)
+		_draw_label(sub_pos + Vector2(0.0, -78.0), str(sub["nombre"]), C_LABEL_DIM, 11)
 
 		# Dibujar planetas
 		var planetas: Array = sub["planetas"]
 		for p_idx: int in planetas.size():
-			var planet: Dictionary = planetas[p_idx]
-			_draw_planet(planet)
+			_draw_planet(planetas[p_idx])
 
 	# Rutas warp entre subsectores
 	var sub_keys: Array = sub_dict.keys()
@@ -456,7 +456,7 @@ func _draw_sector_layer() -> void:
 
 	# Título del sector
 	var sec_name: String = str(sec["nombre"])
-	_draw_label(sec_pos + Vector2(0.0, -sec_radius - 30.0), sec_name.to_upper(), C_LABEL, 14)
+	_draw_label(sec_pos + Vector2(0.0, -sec_radius - 20.0), sec_name.to_upper(), C_LABEL, 18)
 
 func _draw_planet(planet: Dictionary) -> void:
 	var pid: int = int(planet["id"])
@@ -524,18 +524,19 @@ func _draw_dashed_circle(center: Vector2, radius: float, color: Color, width: fl
 		draw_line(p1, p2, color, width, true)
 
 func _draw_warp_route(from: Vector2, to: Vector2) -> void:
-	# Ruta curva (no recta) entre dos puntos
+	_draw_warp_route_thick(from, to, 1.0)
+
+func _draw_warp_route_thick(from: Vector2, to: Vector2, width: float) -> void:
 	var mid: Vector2 = (from + to) / 2.0
 	var perp: Vector2 = (to - from).rotated(PI / 2.0).normalized()
-	var offset: float = from.distance_to(to) * 0.15
-	var control: Vector2 = mid + perp * offset
+	var offset_dist: float = from.distance_to(to) * 0.15
+	var control: Vector2 = mid + perp * offset_dist
 
 	var prev: Vector2 = from
 	for i: int in range(1, 11):
 		var t: float = float(i) / 10.0
-		# Bezier cuadrática
 		var p: Vector2 = from.lerp(control, t).lerp(control.lerp(to, t), t)
-		draw_line(prev, p, C_WARP_ROUTE, 1.0, true)
+		draw_line(prev, p, C_WARP_ROUTE, width, true)
 		prev = p
 
 func _count_sector_planets(sec: Dictionary) -> int:

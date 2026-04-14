@@ -109,7 +109,7 @@ func calculate_all(galaxy: Dictionary) -> void:
 	_calculate_planet_positions(galaxy)
 
 	# Terra: buscar en planetas generados
-	terra_pos = sector_positions.get("solar.solar", Vector2.ZERO)
+	terra_pos = sector_positions.get("solar.solar", TERRA_OFFSET)
 	for pid: int in planet_data_by_id:
 		var p: Dictionary = planet_data_by_id[pid]
 		if p.get("es_canonico", false) and str(p["nombre"]) == "Terra":
@@ -233,9 +233,9 @@ func _calculate_sector_positions(galaxy: Dictionary) -> void:
 			var full_key: String = seg_key + "." + sec_key
 
 			if seg_key == "solar":
-				# Solar: sectores alrededor de Terra
-				var angle: float = (float(i) / float(count)) * TAU + _rng.randf_range(-0.2, 0.2)
-				var dist: float = 200.0 + float(i) * 120.0 + _rng.randf_range(-30.0, 30.0)
+				# Solar: sectores en círculo alrededor de Terra, equidistantes
+				var angle: float = (float(i) / float(count)) * TAU + _rng.randf_range(-0.15, 0.15)
+				var dist: float = 350.0 + _rng.randf_range(-50.0, 80.0)
 				sector_positions[full_key] = TERRA_OFFSET + Vector2(cos(angle), sin(angle)) * dist
 			else:
 				# Segmentae exteriores: dentro de su arco angular canónico, desde Terra
