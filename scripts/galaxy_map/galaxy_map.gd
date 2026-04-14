@@ -66,6 +66,13 @@ func _ready() -> void:
 	if gd_node and gd_node.has_method("set_galaxy"):
 		gd_node.set_galaxy(galaxy)
 
+	# Generar Capítulos de Space Marines
+	var ch_gen: ChapterGenerator = ChapterGenerator.new()
+	var ch_list: Array = ch_gen.generate_chapters(galaxy, 42)
+	if gd_node and gd_node.has_method("set_chapters"):
+		gd_node.set_chapters(ch_list)
+	print(">>> %d Capítulos de Space Marines generados" % ch_list.size())
+
 	# Pasar datos al renderer
 	renderer.setup(galaxy, data_provider, self)
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/galaxy_map/galaxy_map.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/galaxy_map/galaxy_renderer.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/galaxy_map/minimap.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/ui/turn_panel.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/ui/event_log.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/ui/chapter_panel.gd" id="12"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_star"]
 shader = ExtResource("3")
@@ -112,3 +113,15 @@ anchor_bottom = 1.0
 offset_top = -200.0
 offset_bottom = -5.0
 script = ExtResource("11")
+
+[node name="ChapterPanel" type="PanelContainer" parent="UILayer"]
+visible = false
+anchors_preset = 3
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -330.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -220.0
+script = ExtResource("12")

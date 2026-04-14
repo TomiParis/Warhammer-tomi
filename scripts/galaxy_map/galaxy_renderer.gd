@@ -80,6 +80,9 @@ func _draw_galaxy_layer() -> void:
 	# Dibujar sectores como círculos dentro de cada segmentum
 	_draw_sector_circles()
 
+	# Capítulos de Space Marines (Capa 1 y 2)
+	_draw_chapter_icons()
+
 	# Warp Storms canónicas
 	_draw_warp_storms()
 
@@ -526,6 +529,43 @@ func _draw_planet(planet: Dictionary) -> void:
 	if planet.get("es_canonico", false):
 		var nombre: String = str(planet["nombre"])
 		_draw_label(pos + Vector2(radius + 5.0, -3.0), nombre, Color(0.8, 0.78, 0.7, 0.9), 8)
+
+# =============================================================================
+# CAPÍTULOS DE SPACE MARINES
+# =============================================================================
+
+func _draw_chapter_icons() -> void:
+	var gd_node: Node = Engine.get_singleton("GameData") if Engine.has_singleton("GameData") else null
+	if gd_node == null:
+		gd_node = _map.get_node_or_null("/root/GameData") if _map else null
+	if gd_node == null:
+		return
+
+	var ch_list: Array = gd_node.chapters
+	for ch_idx: int in ch_list.size():
+		var ch: Dictionary = ch_list[ch_idx]
+		var mundo_id: int = int(ch["mundo_natal_id"])
+		if mundo_id < 0:
+			continue # Fleet-based sin posición fija
+		if not _dp.planet_positions.has(mundo_id):
+			continue
+
+		var pos: Vector2 = _dp.planet_positions[mundo_id]
+		var col: Color = ch.get("color_primario", Color.WHITE)
+
+		# Ícono: diamante pequeño con el color del capítulo
+		var size: float = 8.0
+		var diamond: PackedVector2Array = PackedVector2Array([
+			pos + Vector2(0, -size),
+			pos + Vector2(size, 0),
+			pos + Vector2(0, size),
+			pos + Vector2(-size, 0),
+		])
+		draw_colored_polygon(diamond, Color(col.r, col.g, col.b, 0.7))
+
+		# Nombre del capítulo (pequeño, al costado)
+		_draw_label(pos + Vector2(size + 4.0, 4.0), str(ch["nombre"]),
+			Color(col.r, col.g, col.b, 0.6), 7)
 
 # =============================================================================
 # UTILIDADES DE DIBUJO

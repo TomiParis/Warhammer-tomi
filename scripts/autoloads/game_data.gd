@@ -6,6 +6,10 @@ extends Node
 # === DATOS DE LA GALAXIA (generados al inicio) ===
 var galaxy: Dictionary = {}
 
+# === CAPÍTULOS DE SPACE MARINES ===
+var chapters: Array = [] # Todos los capítulos
+var chapters_by_id: Dictionary = {} # id -> chapter dict
+
 # === ACCESOS RÁPIDOS (se llenan después de generar) ===
 var planets_by_id: Dictionary = {} # id -> planet dict
 var sectors_by_key: Dictionary = {} # "seg.sec" -> sector data
@@ -79,6 +83,22 @@ static func get_target_planet_count() -> int:
 func set_galaxy(new_galaxy: Dictionary) -> void:
 	galaxy = new_galaxy
 	_build_indexes()
+
+func set_chapters(new_chapters: Array) -> void:
+	chapters = new_chapters
+	chapters_by_id.clear()
+	for ch_idx: int in chapters.size():
+		var ch: Dictionary = chapters[ch_idx]
+		chapters_by_id[int(ch["id"])] = ch
+
+func get_chapter_at_planet(planet_id: int) -> Dictionary:
+	for ch: Dictionary in chapters:
+		if int(ch["mundo_natal_id"]) == planet_id:
+			return ch
+		for comp: Dictionary in ch["companias"]:
+			if int(comp.get("planeta_desplegada", -1)) == planet_id:
+				return ch
+	return {}
 
 func _build_indexes() -> void:
 	planets_by_id.clear()
