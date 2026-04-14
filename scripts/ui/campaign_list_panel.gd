@@ -10,11 +10,11 @@ var _minimized: bool = true
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: izquierda, debajo del fleet_list_panel
+	# Posición: al lado derecho del ► FLOTAS
 	anchor_left = 0.0
 	anchor_top = 0.0
-	offset_left = 5.0
-	offset_top = 55.0 # Debajo del ► FLOTAS
+	offset_left = 170.0 # A la derecha del fleet_list_panel
+	offset_top = 30.0 # Misma altura
 	custom_minimum_size = Vector2(160, 0)
 
 	_update_style()
