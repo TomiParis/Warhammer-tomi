@@ -138,12 +138,21 @@ func _build_planet_text(p: Dictionary) -> String:
 	text += "[color=#c8c0b0]Astropata: %s[/color]\n" % ("Sí" if astropata else "No")
 	text += "[color=#c8c0b0]Ingresos: %d Throne Gelt/mes[/color]\n" % ingresos
 
+	# Amenaza actual
+	var amenaza = p.get("amenaza_actual")
+	if amenaza != null and str(amenaza) != "":
+		text += "\n[color=#8c3a3a]⚠ AMENAZA ACTIVA[/color]\n"
+		text += "[color=#c85a5a]%s[/color]\n" % str(amenaza)
+
 	# Flags
 	var flags: Array = p.get("flags", [])
 	if not flags.is_empty():
 		text += "\n[color=#999080]ESTADO[/color]\n"
 		for f_idx: int in flags.size():
 			text += "[color=#8c5a5a]• %s[/color]\n" % str(flags[f_idx]).to_upper()
+
+	# Eventos del planeta (activos + historial reciente)
+	text += _build_planet_events(int(p["id"]))
 
 	return text
 
@@ -161,6 +170,62 @@ func _format_pop(pop: int) -> String:
 	elif pop >= 1_000_000: return "%.1f millones" % (float(pop) / 1_000_000.0)
 	elif pop >= 1_000: return "%d mil" % floori(float(pop) / 1000.0)
 	else: return str(pop)
+
+func _build_planet_events(planet_id: int) -> String:
+	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
+	if turn_sys == null:
+		return ""
+
+	# Buscar eventos de este planeta en el historial
+	var planet_events: Array = []
+	var historial: Array = turn_sys.historial_eventos
+	for ev_idx: int in historial.size():
+		var ev: Dictionary = historial[ev_idx]
+		if int(ev.get("planeta_id", -1)) == planet_id:
+			planet_events.append(ev)
+		if planet_events.size() >= 10:
+			break # Máximo 10 eventos recientes
+
+	if planet_events.is_empty():
+		return ""
+
+	var text: String = "\n[color=#999080]EVENTOS RECIENTES[/color]\n"
+
+	for ev_idx: int in planet_events.size():
+		var ev: Dictionary = planet_events[ev_idx]
+		var sev: int = int(ev.get("severity", 0))
+		var sev_color: Color = EventDefinitions.SEVERITY_COLORS.get(sev, Color.WHITE)
+		var sev_name: String = str(EventDefinitions.SEVERITY_NAMES.get(sev, ""))
+		var hex: String = sev_color.to_html(false)
+		var turno: String = str(ev.get("turno", "?"))
+
+		text += "[color=#%s]●[/color] " % hex
+		text += "[color=#c8c0b0]%s[/color]" % str(ev.get("nombre", "?"))
+		text += " [color=#605a4a][%s, T%s][/color]\n" % [sev_name, turno]
+
+		# Efectos aplicados
+		var efectos: Dictionary = ev.get("efectos", {})
+		if not efectos.is_empty():
+			var efecto_strs: PackedStringArray = PackedStringArray()
+			for key: String in efectos:
+				var val: int = int(efectos[key])
+				var signo: String = "+" if val > 0 else ""
+				efecto_strs.append("%s%d %s" % [signo, val, _short_stat_name(key)])
+			text += "  [color=#605a4a]%s[/color]\n" % ", ".join(efecto_strs)
+
+	return text
+
+func _short_stat_name(key: String) -> String:
+	match key:
+		"lealtad_imperial": return "Lealtad"
+		"fe_imperial": return "Fe"
+		"capacidad_industrial": return "Industria"
+		"capacidad_militar": return "Militar"
+		"estabilidad_warp": return "Warp"
+		"infiltracion_caos": return "Caos"
+		"infiltracion_genestealer": return "Genestealer"
+		"corrupcion_gobernador": return "Corrupción"
+		_: return key
 
 func _get_seg_name(seg_key: String) -> String:
 	if GalaxyConfig.SEGMENTUM_CONFIG.has(seg_key):
