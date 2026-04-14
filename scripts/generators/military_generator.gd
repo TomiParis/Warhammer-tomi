@@ -91,16 +91,30 @@ func _create_regiment(planet: Dictionary) -> Dictionary:
 	_next_unit_id += 1
 	return unit
 
-func recruit_regiment(planet: Dictionary) -> Dictionary:
+func recruit_regiment(planet: Dictionary, check_transport: bool = true) -> Dictionary:
+	# Verificar transporte disponible
+	if check_transport:
+		var gd: Node = Engine.get_main_loop().root.get_node_or_null("GameData")
+		if gd != null:
+			var fl_data: Dictionary = gd.fleet_data
+			var transports: Array = fl_data.get("transport_fleets", [])
+			var has_transport: bool = false
+			for tr: Dictionary in transports:
+				if str(tr["estado"]) == "disponible":
+					has_transport = true
+					break
+			if not has_transport:
+				return {} # Sin transporte disponible
+
 	# Reclutar consume población
 	var fuerza: int = rng.randi_range(3000, 8000)
 	var pop: int = int(planet["poblacion"])
-	if pop < fuerza * 10: # Necesita 10x la población del regimiento
+	if pop < fuerza * 10:
 		return {}
 	planet["poblacion"] = pop - fuerza
 
 	var unit: Dictionary = _create_regiment(planet)
-	unit["experiencia"] = "verde" # Reclutas nuevos siempre verdes
+	unit["experiencia"] = "verde"
 	unit["moral"] = rng.randi_range(40, 60)
 	unit["suministros_semanas"] = 4
 	return unit

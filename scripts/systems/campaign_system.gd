@@ -53,8 +53,9 @@ func process(campaigns: Array, units: Array, turno: int) -> Dictionary:
 				if not unit.is_empty():
 					unit["fuerza"] = maxi(int(float(int(unit["fuerza"])) * 0.9), 0)
 
-		# 5. Moral
+		# 5. Moral + modificadores por facción
 		_update_moral(camp, units, poder_imperial, poder_enemigo)
+		_apply_faction_moral(camp, units)
 
 		# 6. Frente
 		var frente_anterior: int = int(camp["frente"])
@@ -177,6 +178,11 @@ func _calc_imperial_power(camp: Dictionary, units: Array) -> float:
 		total += fuerza * moral_mult * exp_mult
 
 	total *= strat_mult * cmd_mult
+
+	# Modificadores por facción del controlador del planeta
+	var faction_mult: float = _get_faction_power_mult(camp, units)
+	total *= faction_mult
+
 	return total
 
 func _process_attrition(camp: Dictionary, units: Array, poder_imp: float, poder_enem: float) -> void:
@@ -250,6 +256,90 @@ func _generate_narrative(camp: Dictionary, turno: int) -> void:
 	log.append("[T%d] %s" % [int(camp["duracion_turnos"]), text])
 	if log.size() > 20:
 		log.pop_front()
+
+# =============================================================================
+# MECÁNICAS POR FACCIÓN
+# =============================================================================
+
+func _get_faction_power_mult(camp: Dictionary, units: Array) -> float:
+	var gd: Node = Engine.get_main_loop().root.get_node_or_null("GameData")
+	if gd == null:
+		return 1.0
+
+	var planet_id: int = int(camp["planeta_id"])
+	if not gd.planets_by_id.has(planet_id):
+		return 1.0
+	var planet: Dictionary = gd.planets_by_id[planet_id]
+	var ctrl_tipo: String = str(planet.get("controlador", {}).get("tipo", ""))
+
+	match ctrl_tipo:
+		"adeptus_astartes":
+			return 1.0 # Astartes bonus se aplica por unidad, no globalmente
+		"adeptus_mechanicus":
+			return 1.1 # Forge World supply x2 → +10% efectividad
+		"ecclesiarquia", "cardenal":
+			return 1.05 # Fervor religioso
+		"rogue_trader":
+			return 0.9 # Menos tropas terrestres
+		_:
+			return 1.0
+
+func _apply_faction_moral(camp: Dictionary, units: Array) -> void:
+	var gd: Node = Engine.get_main_loop().root.get_node_or_null("GameData")
+	if gd == null:
+		return
+
+	var planet_id: int = int(camp["planeta_id"])
+	if not gd.planets_by_id.has(planet_id):
+		return
+	var planet: Dictionary = gd.planets_by_id[planet_id]
+	var ctrl_tipo: String = str(planet.get("controlador", {}).get("tipo", ""))
+
+	var moral: int = int(camp["moral"])
+
+	# ASTARTES: +15 moral si hay compañía Astartes
+	var has_astartes: bool = false
+	for uid: int in camp["fuerzas_imperiales"]:
+		var unit: Dictionary = _find_unit(units, uid)
+		if not unit.is_empty() and str(unit.get("experiencia", "")) == "elite":
+			has_astartes = true
+			break
+	# También verificar presencia de capítulo en el planeta
+	if not has_astartes:
+		var astartes_pres = planet.get("guarnicion", {}).get("astartes_presencia")
+		if astartes_pres != null and str(astartes_pres) != "":
+			has_astartes = true
+	if has_astartes:
+		moral += 15
+		# Auto-retiro si campaña > 12 turnos
+		if int(camp["duracion_turnos"]) > 12:
+			camp["log"].append("Los Astartes consideran retirarse — campaña prolongada")
+
+	# ECLESIARQUÍA: moral +10 en planetas con fe alta
+	if ctrl_tipo in ["ecclesiarquia", "cardenal"]:
+		var fe: int = int(planet.get("fe_imperial", 0))
+		if fe > 70:
+			moral += 10
+
+	# MECHANICUS: Skitarii moral capped a 70, pero regen fuerza
+	if ctrl_tipo == "adeptus_mechanicus":
+		for uid2: int in camp["fuerzas_imperiales"]:
+			var unit2: Dictionary = _find_unit(units, uid2)
+			if not unit2.is_empty():
+				# Skitarii regen +5% fuerza por turno
+				var fuerza: int = int(unit2["fuerza"])
+				var fmax: int = int(unit2["fuerza_max"])
+				unit2["fuerza"] = mini(fuerza + floori(float(fmax) * 0.05), fmax)
+				# Moral capped
+				unit2["moral"] = mini(int(unit2["moral"]), 70)
+
+	# ROGUE TRADER: bombardeo orbital reduce enemigo 5%/turno
+	if ctrl_tipo == "rogue_trader":
+		camp["fuerzas_enemigas"] = int(float(int(camp["fuerzas_enemigas"])) * 0.95)
+		if rng.randf() < 0.3:
+			camp["log"].append("Bombardeo orbital del Rogue Trader impacta posiciones enemigas")
+
+	camp["moral"] = clampi(moral, 0, 100)
 
 func _release_units(camp: Dictionary, units: Array) -> void:
 	for uid: int in camp["fuerzas_imperiales"]:
