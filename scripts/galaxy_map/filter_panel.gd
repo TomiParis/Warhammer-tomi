@@ -5,6 +5,9 @@ var _map = null
 var _vbox: VBoxContainer = null
 var _type_checks: Dictionary = {} # tipo -> CheckBox
 var _lado_checks: Dictionary = {} # "sanctus"/"nihilus" -> CheckBox
+var _scroll: ScrollContainer = null
+var _toggle_btn: Button = null
+var _minimized: bool = false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -18,29 +21,46 @@ func _ready() -> void:
 	style.set_content_margin_all(10)
 	add_theme_stylebox_override("panel", style)
 
-	# Posición: lateral izquierdo
+	# Posición: lateral izquierdo, compacto
 	anchor_left = 0.0
 	anchor_top = 0.0
-	anchor_bottom = 1.0
 	offset_left = 0.0
-	offset_top = 45.0
-	offset_bottom = -10.0
-	custom_minimum_size = Vector2(200, 0)
+	offset_top = 35.0
+	custom_minimum_size = Vector2(160, 0)
 
-	# Scroll
-	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_child(scroll)
+	var main_vbox: VBoxContainer = VBoxContainer.new()
+	main_vbox.add_theme_constant_override("separation", 0)
+	add_child(main_vbox)
+
+	# Botón minimizar/expandir
+	_toggle_btn = Button.new()
+	_toggle_btn.text = "▼ FILTROS"
+	_toggle_btn.flat = true
+	_toggle_btn.add_theme_color_override("font_color", Color(0.7, 0.65, 0.5))
+	_toggle_btn.add_theme_font_size_override("font_size", 11)
+	_toggle_btn.pressed.connect(_on_toggle)
+	main_vbox.add_child(_toggle_btn)
+
+	# Scroll con contenido (colapsable)
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.custom_minimum_size = Vector2(150, 350)
+	main_vbox.add_child(_scroll)
 
 	_vbox = VBoxContainer.new()
 	_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_vbox)
+	_scroll.add_child(_vbox)
 
 	_build_filters()
 
-func setup(map_ref: Node2D) -> void:
+func setup(map_ref: Variant) -> void:
 	_map = map_ref
+
+func _on_toggle() -> void:
+	_minimized = not _minimized
+	_scroll.visible = not _minimized
+	_toggle_btn.text = "► FILTROS" if _minimized else "▼ FILTROS"
 
 func _build_filters() -> void:
 	# Título

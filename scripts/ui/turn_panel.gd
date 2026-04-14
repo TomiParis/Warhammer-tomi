@@ -13,13 +13,15 @@ var _showing_resumen: bool = false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: top-center
-	anchor_left = 0.5
-	anchor_right = 0.5
-	offset_left = -230.0
-	offset_right = 230.0
-	offset_top = 5.0
-	offset_bottom = 80.0
+	# Posición: abajo-derecha
+	anchor_left = 1.0
+	anchor_right = 1.0
+	anchor_top = 1.0
+	anchor_bottom = 1.0
+	offset_left = -310.0
+	offset_right = -5.0
+	offset_top = -85.0
+	offset_bottom = -5.0
 
 	# Estilo
 	var style: StyleBoxFlat = StyleBoxFlat.new()
@@ -86,17 +88,18 @@ func _ready() -> void:
 		spd_btn.pressed.connect(func() -> void: _set_speed(captured_spd))
 		bot_row.add_child(spd_btn)
 
-	# Panel de resumen desplegable (debajo del panel principal)
+	# Panel de resumen flotante (se expande hacia ARRIBA)
 	_resumen_panel = PanelContainer.new()
 	_resumen_panel.visible = false
+	_resumen_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	var res_style: StyleBoxFlat = StyleBoxFlat.new()
 	res_style.bg_color = Color(0.04, 0.04, 0.07, 0.92)
 	res_style.border_color = Color(0.45, 0.42, 0.3, 0.2)
 	res_style.set_border_width_all(1)
 	res_style.set_content_margin_all(10)
 	_resumen_panel.add_theme_stylebox_override("panel", res_style)
-	_resumen_panel.custom_minimum_size = Vector2(440, 200)
-	vbox.add_child(_resumen_panel)
+	# Posicionado como hijo del parent (UILayer), no del vbox
+	call_deferred("_setup_resumen_panel")
 
 	_resumen_content = RichTextLabel.new()
 	_resumen_content.bbcode_enabled = true
@@ -107,6 +110,21 @@ func _ready() -> void:
 	_resumen_panel.add_child(_resumen_content)
 
 	call_deferred("_connect_signals")
+
+func _setup_resumen_panel() -> void:
+	# Agregar el resumen al padre (UILayer) para que flote independiente
+	var parent_node: Node = get_parent()
+	if parent_node:
+		parent_node.add_child(_resumen_panel)
+		# Posicionar arriba del TurnPanel (abajo-derecha, expandiéndose hacia arriba)
+		_resumen_panel.anchor_left = 1.0
+		_resumen_panel.anchor_right = 1.0
+		_resumen_panel.anchor_top = 1.0
+		_resumen_panel.anchor_bottom = 1.0
+		_resumen_panel.offset_left = -460.0
+		_resumen_panel.offset_right = -5.0
+		_resumen_panel.offset_top = -330.0
+		_resumen_panel.offset_bottom = -90.0
 
 func _create_button(text: String, color: Color, size: int) -> Button:
 	var btn: Button = Button.new()
