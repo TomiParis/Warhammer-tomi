@@ -195,7 +195,7 @@ const SECTOR_CONFIG := {
 		},
 		"octarius": {
 			"nombre": "Sector Octarius",
-			"lado_grieta": "nihilus",
+			"lado_grieta": "sanctus",  # map 110° = sureste, al sur de la Cicatrix
 			"amenaza_mod": 75,
 			"warp_mod": -10,
 			"map_pos": [110.0, 0.40],  # 3:40h, este-sureste cerca del centro
@@ -235,7 +235,7 @@ const SECTOR_CONFIG := {
 		},
 		"tau_sept": {
 			"nombre": "Sector T'au Sept",
-			"lado_grieta": "sanctus",
+			"lado_grieta": "nihilus",  # map 65° = noreste, más allá de la Cicatrix
 			"amenaza_mod": 45,
 			"warp_mod": 0,
 			"map_pos": [65.0, 0.85],  # 2:10h, borde este — territorio T'au
@@ -269,7 +269,7 @@ const SECTOR_CONFIG := {
 		},
 		"orpheus": {
 			"nombre": "Sector Orpheus",
-			"lado_grieta": "nihilus",
+			"lado_grieta": "sanctus",  # Tempestus está al sur, lejos de la Cicatrix
 			"amenaza_mod": 55,
 			"warp_mod": -15,
 			"subsectores": ["Orpheus Core", "Amarok", "Bastior Reach"],
