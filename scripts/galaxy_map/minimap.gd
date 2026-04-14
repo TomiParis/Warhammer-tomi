@@ -43,7 +43,7 @@ func _draw() -> void:
 	for seg_key: String in _dp.segmentum_centers:
 		var world_pos: Vector2 = _dp.segmentum_centers[seg_key]
 		var mini_pos: Vector2 = _world_to_mini(world_pos)
-		var color: Color = GalaxyDataProvider.SEG_COLORS.get(seg_key, Color.WHITE)
+		var color: Color = GalaxyConfig.SEG_COLORS.get(seg_key, Color.WHITE)
 		var radius: float = 15.0 if seg_key == "solar" else 25.0
 		draw_circle(mini_pos, radius, Color(color.r, color.g, color.b, 0.3))
 

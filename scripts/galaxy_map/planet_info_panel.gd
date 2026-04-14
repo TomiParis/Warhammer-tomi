@@ -96,7 +96,7 @@ func _build_planet_text(p: Dictionary) -> String:
 		lado_badge = "[color=#8c5a5a]NIHILUS[/color]"
 
 	# Badge de tipo con color
-	var tipo_color: String = GalaxyDataProvider.PLANET_COLORS.get(tipo_key, Color.WHITE).to_html(false)
+	var tipo_color: String = PlanetTypes.COLORS.get(tipo_key, Color.WHITE).to_html(false)
 	var tipo_badge: String = "[color=#%s]%s[/color]" % [tipo_color, tipo_name]
 
 	var text: String = ""
