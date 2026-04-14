@@ -19,13 +19,14 @@ func _ready() -> void:
 	style.content_margin_bottom = 8.0
 	add_theme_stylebox_override("panel", style)
 
-	# Posición: izquierda, debajo de la lista de flotas, compacto
+	# Posición: izquierda, debajo de la lista de flotas
 	anchor_left = 0.0
 	anchor_top = 0.0
+	anchor_bottom = 1.0
 	offset_left = 5.0
-	offset_top = 340.0
-	offset_right = 220.0
-	offset_bottom = 580.0
+	offset_top = 320.0
+	offset_right = 200.0
+	offset_bottom = -5.0
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -65,9 +66,11 @@ func show_transport_summary(fleet_data: Dictionary) -> void:
 func _build_bf_text(bf: Dictionary) -> String:
 	var t: String = ""
 
-	# Nombre
 	t += "[color=#5a8ab0]⚓[/color] [color=#d9c05a][b]%s[/b][/color]\n" % str(bf["nombre"])
-	t += "[color=#807a6b]%s[/color]\n" % str(bf["admiral"])
+	t += "[color=#807a6b]Armada Imperial[/color]\n"
+
+	t += "[color=#999080]COMANDANTE[/color]\n"
+	t += "[color=#c8c0b0]%s[/color]\n" % str(bf["admiral"])
 
 	var estado: String = str(bf["estado"])
 	var estado_col: String = "6b8c5a"
@@ -75,19 +78,32 @@ func _build_bf_text(bf: Dictionary) -> String:
 		"desplegada": estado_col = "c09a40"
 		"combate": estado_col = "8c5a5a"
 		"reparaciones": estado_col = "c09a40"
-	t += "[color=#%s]%s[/color] • [color=#807a6b]%s[/color]\n" % [estado_col, estado.to_upper(), str(bf["sector"])]
+	t += "[color=#999080]ESTADO[/color]\n"
+	t += "[color=#%s]%s[/color]\n" % [estado_col, estado.to_upper()]
 
 	var capital: int = int(bf["naves_capital"])
 	var cruceros: int = int(bf["cruceros"])
 	var escoltas: int = int(bf["escoltas"])
 	var total: int = capital + cruceros + escoltas
-	t += "[color=#c8c0b0]%d capital, %d cruceros, %d escoltas[/color]\n" % [capital, cruceros, escoltas]
-	t += "[color=#d9c05a]Total: %d naves[/color]\n" % total
+	t += "[color=#999080]COMPOSICIÓN[/color]\n"
+	t += " Capital: [color=#c8c0b0]%d[/color]\n" % capital
+	t += " Cruceros: [color=#c8c0b0]%d[/color]\n" % cruceros
+	t += " Escoltas: [color=#c8c0b0]%d[/color]\n" % escoltas
+	t += " [color=#d9c05a]Total: %d naves[/color]\n" % total
 
-	var moral: int = int(bf["moral"])
-	var exp_val: int = int(bf["experiencia"])
-	t += _stat_line("Moral", moral)
-	t += _stat_line("Exp", exp_val)
+	var poder: int = capital * 10 + cruceros * 4 + escoltas
+	var poder_bar: int = clampi(floori(float(poder) / 50.0), 0, 10)
+	var poder_col: String = "6b8c5a" if poder > 300 else ("c09a40" if poder > 150 else "8c5a5a")
+	t += "[color=#999080]PODER DE COMBATE[/color]\n"
+	t += " [color=#%s]%s[/color][color=#333]%s[/color] %d\n" % [
+		poder_col, "█".repeat(poder_bar), "░".repeat(10 - poder_bar), poder]
+
+	t += "[color=#999080]TRIPULACIÓN[/color]\n"
+	t += _stat_line("Moral", int(bf["moral"]))
+	t += _stat_line("Exp", int(bf["experiencia"]))
+
+	t += "[color=#999080]ASIGNACIÓN[/color]\n"
+	t += " [color=#c8c0b0]%s[/color]\n" % str(bf["sector"])
 
 	return t
 
