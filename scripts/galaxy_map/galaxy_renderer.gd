@@ -45,8 +45,11 @@ func _draw() -> void:
 	if _dp == null:
 		return
 
+	# Siempre dibujar la base galáctica (elementos de fondo persisten en todas las capas)
+	_draw_galaxy_layer()
+
+	# Dibujar la capa activa encima
 	match _state:
-		0: _draw_galaxy_layer()
 		1: _draw_segmentum_layer()
 		2: _draw_sector_layer()
 
@@ -65,8 +68,20 @@ func _draw_galaxy_layer() -> void:
 		draw_colored_polygon(poly, color)
 		_draw_polygon_outline(poly, Color(color.r, color.g, color.b, 0.25), 2.0)
 
+	# Astronomicán (círculo dorado desde Terra)
+	_draw_astronomican()
+
+	# Territorios enemigos (debajo de los sectores)
+	_draw_enemy_territories()
+
+	# Región de Ultramar
+	_draw_ultramar()
+
 	# Dibujar sectores como círculos dentro de cada segmentum
 	_draw_sector_circles()
+
+	# Warp Storms canónicas
+	_draw_warp_storms()
 
 	# Gran Grieta
 	_draw_rift()
@@ -74,13 +89,16 @@ func _draw_galaxy_layer() -> void:
 	# Ojo del Terror
 	_draw_eye_of_terror()
 
+	# Hive Fleet vectors
+	_draw_hive_fleets()
+
 	# Terra (punto brillante en el centro)
 	draw_circle(_dp.terra_pos, 40.0, Color(C_TERRA.r, C_TERRA.g, C_TERRA.b, 0.2))
 	draw_circle(_dp.terra_pos, 20.0, Color(C_TERRA.r, C_TERRA.g, C_TERRA.b, 0.4))
 	draw_circle(_dp.terra_pos, 8.0, C_TERRA)
 	_draw_label(_dp.terra_pos + Vector2(60.0, -30.0), "TERRA", C_TERRA, 100)
 
-	# Labels de segmentae FUERA del disco — tamaño grande para ser legibles en zoom lejano
+	# Labels de segmentae FUERA del disco
 	for seg_key: String in _dp.segmentum_label_pos:
 		var pos: Vector2 = _dp.segmentum_label_pos[seg_key]
 		var seg_name: String = ""
@@ -89,12 +107,136 @@ func _draw_galaxy_layer() -> void:
 		var seg_color: Color = GalaxyDataProvider.SEG_COLORS.get(seg_key, Color(0.5, 0.5, 0.5, 0.5))
 		_draw_label(pos, seg_name, Color(seg_color.r * 3.0, seg_color.g * 3.0, seg_color.b * 3.0, 0.7), 300)
 
-	# Indicador de la Gran Grieta
-	_draw_label(Vector2(2000.0, -600.0), "CICATRIX MALEDICTUM", Color(0.5, 0.15, 0.2, 0.5), 180)
+	# Indicador de la Gran Grieta (posicionado a lo largo de la grieta)
+	if _dp.rift_points.size() > 20:
+		var rift_mid: Vector2 = _dp.rift_points[_dp.rift_points.size() / 2]
+		_draw_label(rift_mid + Vector2(0.0, -200.0), "CICATRIX MALEDICTUM", Color(0.5, 0.15, 0.2, 0.5), 180)
 
-	# Indicadores Sanctus / Nihilus
-	_draw_label(Vector2(0.0, 2000.0), "IMPERIUM SANCTUS", Color(0.5, 0.6, 0.4, 0.3), 200)
-	_draw_label(Vector2(0.0, -2500.0), "IMPERIUM NIHILUS", Color(0.5, 0.3, 0.3, 0.3), 200)
+	# Indicadores Sanctus / Nihilus (relativos a la posición de Terra)
+	var terra: Vector2 = _dp.terra_pos
+	_draw_label(terra + Vector2(0.0, 2200.0), "IMPERIUM SANCTUS", Color(0.5, 0.6, 0.4, 0.3), 200)
+	_draw_label(terra + Vector2(0.0, -2700.0), "IMPERIUM NIHILUS", Color(0.5, 0.3, 0.3, 0.3), 200)
+
+# =============================================================================
+# ASTRONOMICÁN
+# =============================================================================
+
+func _draw_astronomican() -> void:
+	var center: Vector2 = _dp.terra_pos
+	var radius: float = _dp.astronomican_radius
+
+	# Círculo dorado tenue del rango del Astronomicán
+	_draw_circle_outline(center, radius, Color(0.85, 0.7, 0.2, 0.12), 3.0)
+
+	# Segundo anillo interior más tenue
+	_draw_circle_outline(center, radius * 0.97, Color(0.85, 0.7, 0.2, 0.06), 1.5)
+
+	# Label
+	_draw_label(center + Vector2(radius + 80.0, 0.0), "ASTRONOMICÁN", Color(0.75, 0.6, 0.2, 0.35), 80)
+	_draw_label(center + Vector2(radius + 80.0, 90.0), "RANGO MÁXIMO", Color(0.6, 0.5, 0.2, 0.25), 50)
+
+# =============================================================================
+# WARP STORMS CANÓNICAS
+# =============================================================================
+
+func _draw_warp_storms() -> void:
+	for i: int in _dp.warp_storms.size():
+		var storm: Dictionary = _dp.warp_storms[i]
+		var pos: Vector2 = storm["pos"]
+		var radius: float = float(storm["radius"])
+		var color: Color = storm["color"]
+		var nombre: String = str(storm["nombre"])
+
+		# Glow exterior
+		_draw_filled_circle(pos, radius * 1.4, Color(color.r, color.g, color.b, color.a * 0.3))
+		# Core
+		_draw_filled_circle(pos, radius, color)
+		# Centro más intenso
+		_draw_filled_circle(pos, radius * 0.4, Color(color.r, color.g, color.b, color.a * 1.5))
+
+		# Label
+		_draw_label(pos + Vector2(0.0, -radius - 30.0), nombre, Color(color.r * 1.5, color.g * 1.5, color.b * 1.5, 0.5), 55)
+
+# =============================================================================
+# TERRITORIOS ENEMIGOS
+# =============================================================================
+
+func _draw_enemy_territories() -> void:
+	for i: int in _dp.enemy_territories.size():
+		var terr: Dictionary = _dp.enemy_territories[i]
+		var center: Vector2 = terr["center"]
+		var radius: float = float(terr["radius"])
+		var color: Color = terr["color"]
+		var border_color: Color = terr["border_color"]
+		var label_color: Color = terr["label_color"]
+		var nombre: String = str(terr["nombre"])
+
+		# Relleno
+		_draw_filled_circle(center, radius, color)
+		# Borde punteado
+		_draw_dashed_circle(center, radius, border_color, 2.0)
+		# Label
+		_draw_label(center, nombre, label_color, 60)
+
+# =============================================================================
+# REGIÓN DE ULTRAMAR
+# =============================================================================
+
+func _draw_ultramar() -> void:
+	var center: Vector2 = _dp.ultramar_center
+	var radius: float = _dp.ultramar_radius
+
+	# Relleno azul muy tenue
+	_draw_filled_circle(center, radius, Color(0.15, 0.25, 0.6, 0.08))
+	# Borde azul
+	_draw_circle_outline(center, radius, Color(0.2, 0.35, 0.7, 0.25), 2.0)
+	# Label
+	_draw_label(center + Vector2(0.0, -radius - 25.0), "ULTRAMAR", Color(0.3, 0.45, 0.8, 0.5), 70)
+	_draw_label(center + Vector2(0.0, -radius + 40.0), "500 Mundos de los Ultramarines", Color(0.3, 0.4, 0.65, 0.3), 35)
+
+# =============================================================================
+# VECTORES DE HIVE FLEETS
+# =============================================================================
+
+func _draw_hive_fleets() -> void:
+	for i: int in _dp.hive_fleet_vectors.size():
+		var fleet: Dictionary = _dp.hive_fleet_vectors[i]
+		var points: PackedVector2Array = fleet["points"]
+		var color: Color = fleet["color"]
+		var nombre: String = str(fleet["nombre"])
+		var status: String = str(fleet["status"])
+
+		if points.size() < 2:
+			continue
+
+		# Dibujar la línea de avance (más gruesa al final = cabeza de la flota)
+		for j: int in range(0, points.size() - 1):
+			var p1: Vector2 = points[j]
+			var p2: Vector2 = points[j + 1]
+			# Grosor creciente hacia la cabeza
+			var width: float = 2.0 + float(j) * 3.0
+			draw_line(p1, p2, color, width, true)
+
+		# Punta de flecha en el último punto
+		var tip: Vector2 = points[points.size() - 1]
+		var prev: Vector2 = points[points.size() - 2]
+		var dir: Vector2 = (tip - prev).normalized()
+		var perp: Vector2 = dir.rotated(PI / 2.0)
+		var arrow_size: float = 60.0
+
+		var arrow_pts: PackedVector2Array = PackedVector2Array([
+			tip + dir * arrow_size,
+			tip - dir * 10.0 + perp * arrow_size * 0.5,
+			tip - dir * 10.0 - perp * arrow_size * 0.5,
+		])
+		draw_colored_polygon(arrow_pts, color)
+
+		# Label al inicio del vector (fuera de la galaxia)
+		var label_pos: Vector2 = points[0]
+		_draw_label(label_pos, nombre, Color(color.r, color.g, color.b, 0.7), 70)
+		# Status
+		var status_color: Color = Color(0.8, 0.2, 0.2, 0.6) if status == "ACTIVA" else Color(0.5, 0.5, 0.4, 0.4)
+		_draw_label(label_pos + Vector2(0.0, 80.0), "[" + status + "]", status_color, 45)
 
 func _draw_sector_circles() -> void:
 	# Dibujar cada sector como un círculo con nombre en la vista galáctica
@@ -133,13 +275,19 @@ func _draw_sector_circles() -> void:
 		_draw_label(pos + Vector2(0.0, 70.0), str(planet_count) + " mundos", C_LABEL_DIM, 40)
 
 func _draw_galaxy_disc() -> void:
-	# Disco galáctico como elipse muy tenue
+	# Disco galáctico centrado en el CENTRO GALÁCTICO REAL (Vector2.ZERO)
+	# No en Terra (que está desplazada al oeste)
 	var steps: int = 64
 	var pts: PackedVector2Array = PackedVector2Array()
 	for i: int in steps:
 		var angle: float = (float(i) / float(steps)) * TAU
 		pts.append(Vector2(cos(angle) * 4800.0, sin(angle) * 4800.0))
 	draw_colored_polygon(pts, Color(0.08, 0.07, 0.12, 0.15))
+
+	# Marca del centro galáctico real
+	draw_circle(Vector2.ZERO, 30.0, Color(0.3, 0.2, 0.1, 0.25))
+	draw_circle(Vector2.ZERO, 10.0, Color(0.4, 0.3, 0.15, 0.4))
+	_draw_label(Vector2(0.0, 60.0), "CENTRO GALÁCTICO", Color(0.4, 0.3, 0.15, 0.3), 60)
 
 func _draw_rift() -> void:
 	if _dp.rift_points.size() < 2:
