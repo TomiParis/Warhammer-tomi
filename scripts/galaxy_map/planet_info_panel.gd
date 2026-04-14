@@ -141,9 +141,6 @@ func _build_planet_text(p: Dictionary) -> String:
 	text += "[color=#c8c0b0]Astropata: %s[/color]\n" % ("Sí" if astropata else "No")
 	text += "[color=#c8c0b0]Ingresos: %d Throne Gelt/mes[/color]\n" % ingresos
 
-	# Flotas del sector
-	text += _build_fleet_section(str(p["segmentum"]), str(p["sector"]))
-
 	# Amenaza actual
 	var amenaza = p.get("amenaza_actual")
 	if amenaza != null and str(amenaza) != "":
