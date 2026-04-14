@@ -117,9 +117,8 @@ func _build_planet_text(p: Dictionary) -> String:
 	text += "[color=#999080]GRADO DE DIEZMO[/color]\n"
 	text += "[color=#c8c0b0]%s[/color]\n\n" % tithe_name
 
-	# Controlador
-	text += "[color=#999080]CONTROLADOR[/color]\n"
-	text += "[color=#c8c0b0]%s[/color]\n\n" % ctrl_nombre
+	# Gobernanza expandida
+	text += _build_governance_section(controlador)
 
 	# Stats con barras de texto
 	text += "[color=#999080]ESTADÍSTICAS[/color]\n"
@@ -174,6 +173,67 @@ func _format_pop(pop: int) -> String:
 	elif pop >= 1_000_000: return "%.1f millones" % (float(pop) / 1_000_000.0)
 	elif pop >= 1_000: return "%d mil" % floori(float(pop) / 1000.0)
 	else: return str(pop)
+
+func _build_governance_section(ctrl: Dictionary) -> String:
+	var tipo: String = str(ctrl.get("tipo", ""))
+	var nombre: String = str(ctrl.get("nombre", "Desconocido"))
+
+	# Ícono y color de facción
+	var faction_info: Dictionary = FactionData.FACTIONS.get(tipo, {})
+	var icono: String = str(faction_info.get("icono", "●"))
+	var faction_name: String = str(faction_info.get("nombre", tipo))
+	var col: Color = faction_info.get("color", Color(0.6, 0.6, 0.6))
+	var hex: String = col.to_html(false)
+
+	var t: String = "[color=#999080]GOBERNANZA[/color]\n"
+	t += "[color=#%s]%s %s[/color]\n" % [hex, icono, faction_name]
+	t += "[color=#c8c0b0]%s[/color]\n" % nombre
+
+	# Detalles según tipo
+	match tipo:
+		"gobernador_planetario", "aristocracia_local", "nobleza_local":
+			if ctrl.has("titulo"):
+				t += "[color=#807a6b]%s[/color]\n" % str(ctrl["titulo"])
+			if ctrl.has("dinastia"):
+				t += "[color=#807a6b]%s (%d siglos)[/color]\n" % [
+					str(ctrl["dinastia"]), int(ctrl.get("dinastia_siglos", 0))]
+			if ctrl.has("competencia"):
+				t += "[color=#807a6b]Competencia: %d  Ambición: %d[/color]\n" % [
+					int(ctrl["competencia"]), int(ctrl.get("ambicion", 0))]
+		"adeptus_mechanicus":
+			if ctrl.has("nivel_tech"):
+				t += "[color=#807a6b]Nivel Tecnológico: %d[/color]\n" % int(ctrl["nivel_tech"])
+			if int(ctrl.get("titan_legios", 0)) > 0:
+				t += "[color=#c09a40]Titan Legio disponible[/color]\n"
+		"ecclesiarquia", "cardenal":
+			if ctrl.has("rango"):
+				t += "[color=#807a6b]Rango: %s[/color]\n" % str(ctrl["rango"])
+			if ctrl.has("sororitas_orden"):
+				t += "[color=#807a6b]Sororitas: %s[/color]\n" % str(ctrl["sororitas_orden"])
+		"casa_noble":
+			if ctrl.has("casa"):
+				t += "[color=#807a6b]%s[/color]\n" % str(ctrl["casa"])
+			if ctrl.has("knights_operativos"):
+				t += "[color=#807a6b]Knights: %d operativos[/color]\n" % int(ctrl["knights_operativos"])
+			if ctrl.has("alianza"):
+				t += "[color=#807a6b]Alianza: %s[/color]\n" % str(ctrl["alianza"]).capitalize()
+		"rogue_trader":
+			if ctrl.has("dinastia"):
+				t += "[color=#807a6b]%s[/color]\n" % str(ctrl["dinastia"])
+			if ctrl.has("warrant_era"):
+				t += "[color=#807a6b]Warrant: %s[/color]\n" % str(ctrl["warrant_era"])
+			if ctrl.has("flota_naves"):
+				t += "[color=#807a6b]Flota: %d naves[/color]\n" % int(ctrl["flota_naves"])
+		"comandante_militar":
+			if ctrl.has("rango_militar"):
+				t += "[color=#807a6b]%s[/color]\n" % str(ctrl["rango_militar"])
+		"adeptus_arbites":
+			if bool(ctrl.get("ley_marcial", false)):
+				var turnos: int = int(ctrl.get("turnos_restantes", 0))
+				t += "[color=#8c5a5a]LEY MARCIAL (%d turnos)[/color]\n" % turnos
+
+	t += "\n"
+	return t
 
 func _on_meta_clicked(meta: Variant) -> void:
 	var meta_str: String = str(meta)

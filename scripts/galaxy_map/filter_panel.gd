@@ -5,6 +5,7 @@ var _map = null
 var _vbox: VBoxContainer = null
 var _type_checks: Dictionary = {} # tipo -> CheckBox
 var _lado_checks: Dictionary = {} # "sanctus"/"nihilus" -> CheckBox
+var _ctrl_checks: Dictionary = {} # controlador_tipo -> CheckBox
 var _scroll: ScrollContainer = null
 var _toggle_btn: Button = null
 var _minimized: bool = false
@@ -107,6 +108,24 @@ func _build_filters() -> void:
 		var nombre: String = str(PlanetTypes.TYPES[tipo]["nombre"])
 		_add_type_check(tipo, nombre)
 
+	_add_separator()
+
+	# Filtro por controlador/facción
+	var ctrl_label: Label = Label.new()
+	ctrl_label.text = "Controlador"
+	ctrl_label.add_theme_color_override("font_color", Color(0.6, 0.55, 0.45))
+	ctrl_label.add_theme_font_size_override("font_size", 11)
+	_vbox.add_child(ctrl_label)
+
+	var ctrl_types: Array = ["gobernador_planetario", "adeptus_mechanicus", "ecclesiarquia",
+		"adeptus_astartes", "casa_noble", "rogue_trader", "comandante_militar"]
+	for ct_idx: int in ctrl_types.size():
+		var ct: String = ctrl_types[ct_idx]
+		var ct_name: String = ct
+		if FactionData.FACTIONS.has(ct):
+			ct_name = str(FactionData.FACTIONS[ct]["nombre"])
+		_add_ctrl_check(ct, ct_name)
+
 func _add_type_check(tipo: String, label_text: String) -> void:
 	var cb: CheckBox = CheckBox.new()
 	cb.text = label_text
@@ -115,6 +134,16 @@ func _add_type_check(tipo: String, label_text: String) -> void:
 	cb.add_theme_font_size_override("font_size", 10)
 	cb.toggled.connect(func(_pressed: bool) -> void: _apply_filters())
 	_type_checks[tipo] = cb
+	_vbox.add_child(cb)
+
+func _add_ctrl_check(ctrl_type: String, label_text: String) -> void:
+	var cb: CheckBox = CheckBox.new()
+	cb.text = label_text
+	cb.button_pressed = true
+	cb.add_theme_color_override("font_color", Color(0.55, 0.52, 0.45))
+	cb.add_theme_font_size_override("font_size", 10)
+	cb.toggled.connect(func(_pressed: bool) -> void: _apply_filters())
+	_ctrl_checks[ctrl_type] = cb
 	_vbox.add_child(cb)
 
 func _add_lado_check(lado: String, label_text: String) -> void:
@@ -150,6 +179,13 @@ func _apply_filters() -> void:
 		if _lado_checks[lado].button_pressed:
 			active_lados[lado] = true
 
+	# Determinar qué controladores están activos
+	var active_ctrls: Dictionary = {}
+	var has_ctrl_filter: bool = not _ctrl_checks.is_empty()
+	for ct: String in _ctrl_checks:
+		if _ctrl_checks[ct].button_pressed:
+			active_ctrls[ct] = true
+
 	# Marcar planetas que no pasan el filtro
 	var planetas: Array = _map.galaxy.get("planetas", [])
 	for p_idx: int in planetas.size():
@@ -157,8 +193,11 @@ func _apply_filters() -> void:
 		var tipo: String = str(p["tipo"])
 		var lado: String = str(p["lado_grieta"])
 		var pid: int = int(p["id"])
+		var ctrl_tipo: String = str(p.get("controlador", {}).get("tipo", ""))
 
 		var passes: bool = active_types.has(tipo) and active_lados.has(lado)
+		if has_ctrl_filter and passes:
+			passes = active_ctrls.has(ctrl_tipo) or active_ctrls.is_empty()
 		if not passes:
 			_map.filter_dimmed_ids[pid] = true
 

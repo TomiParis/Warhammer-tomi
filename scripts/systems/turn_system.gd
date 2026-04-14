@@ -27,6 +27,7 @@ var campaigns: CampaignSystem = CampaignSystem.new()
 var intel: IntelSystem = IntelSystem.new()
 var movement: MovementSystem = MovementSystem.new()
 var chapter_sys: ChapterSystem = ChapterSystem.new()
+var governance: GovernanceSystem = GovernanceSystem.new()
 
 # Historial de eventos
 var eventos_turno_actual: Array = []
@@ -99,8 +100,12 @@ func ejecutar_turno() -> void:
 	while historial_eventos.size() > MAX_HISTORIAL:
 		historial_eventos.pop_back()
 
-	# Fase D: Capítulos de Space Marines
+	# Fase D: Gobernanza imperial
 	var gd_node: Node = get_node_or_null("/root/GameData")
+	var faction_rels: Dictionary = gd_node.faction_relations if gd_node else {}
+	var resumen_gov: Dictionary = governance.process(planetas, faction_rels, turno_actual)
+
+	# Fase E: Capítulos de Space Marines
 	var ch_list: Array = gd_node.chapters if gd_node else []
 	var resumen_chapters: Dictionary = chapter_sys.process(ch_list, planetas, turno_actual)
 
@@ -120,6 +125,7 @@ func ejecutar_turno() -> void:
 		"economia": resumen_eco,
 		"eventos_count": eventos_turno_actual.size(),
 		"eventos": eventos_turno_actual,
+		"gobernanza": resumen_gov,
 		"chapters": resumen_chapters,
 		"campanas": resumen_camp,
 		"inteligencia": resumen_intel,

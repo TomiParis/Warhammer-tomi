@@ -7,8 +7,14 @@ extends Node
 var galaxy: Dictionary = {}
 
 # === CAPÍTULOS DE SPACE MARINES ===
-var chapters: Array = [] # Todos los capítulos
-var chapters_by_id: Dictionary = {} # id -> chapter dict
+var chapters: Array = []
+var chapters_by_id: Dictionary = {}
+
+# === GOBERNANZA ===
+var lord_sectors: Dictionary = {}     # "seg.sec" -> lord_sector dict
+var knight_houses: Array = []
+var rogue_traders: Array = []
+var faction_relations: Dictionary = {} # "faccion.faccion" -> 0-100
 
 # === ACCESOS RÁPIDOS (se llenan después de generar) ===
 var planets_by_id: Dictionary = {} # id -> planet dict
@@ -90,6 +96,12 @@ func set_chapters(new_chapters: Array) -> void:
 	for ch_idx: int in chapters.size():
 		var ch: Dictionary = chapters[ch_idx]
 		chapters_by_id[int(ch["id"])] = ch
+
+func set_governance(gov_data: Dictionary) -> void:
+	lord_sectors = gov_data.get("lord_sectors", {})
+	knight_houses = gov_data.get("knight_houses", [])
+	rogue_traders = gov_data.get("rogue_traders", [])
+	faction_relations = gov_data.get("faction_relations", {})
 
 func get_chapter_at_planet(planet_id: int) -> Dictionary:
 	for ch: Dictionary in chapters:

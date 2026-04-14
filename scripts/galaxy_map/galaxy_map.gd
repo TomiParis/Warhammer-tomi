@@ -74,6 +74,15 @@ func _ready() -> void:
 		gd_node.set_chapters(ch_list)
 	print(">>> %d Capítulos de Space Marines generados" % ch_list.size())
 
+	# Generar sistema de gobernanza
+	var gov_gen: GovernanceGenerator = GovernanceGenerator.new()
+	var gov_data: Dictionary = gov_gen.generate(galaxy, 42)
+	if gd_node and gd_node.has_method("set_governance"):
+		gd_node.set_governance(gov_data)
+	print(">>> Gobernanza: %d Lord Sectors, %d Knight Houses, %d Rogue Traders" % [
+		gov_data["lord_sectors"].size(), gov_data["knight_houses"].size(), gov_data["rogue_traders"].size()
+	])
+
 	# Pasar datos al renderer
 	renderer.setup(galaxy, data_provider, self)
 
