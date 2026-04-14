@@ -20,36 +20,38 @@ func _ready() -> void:
 	style.content_margin_bottom = 12.0
 	add_theme_stylebox_override("panel", style)
 
-	# Layout
+	# Layout — panel anclado a la derecha, ocupa todo el alto disponible
 	custom_minimum_size = Vector2(320, 0)
-	anchor_right = 1.0
-	anchor_bottom = 1.0
 	anchor_left = 1.0
+	anchor_right = 1.0
+	anchor_top = 0.0
+	anchor_bottom = 1.0
 	offset_left = -330.0
-	offset_top = 50.0
-	offset_bottom = -10.0
-	offset_right = -10.0
+	offset_top = 5.0
+	offset_bottom = -210.0 # Espacio para el EventLog abajo
+	offset_right = -5.0
 
-	# Contenido
+	# Contenido con VBox
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.name = "VBox"
+	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(vbox)
 
 	# Botón cerrar
 	_close_btn = Button.new()
 	_close_btn.text = "✕"
 	_close_btn.flat = true
-	_close_btn.custom_minimum_size = Vector2(30, 30)
+	_close_btn.custom_minimum_size = Vector2(30, 25)
 	_close_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
 	_close_btn.add_theme_color_override("font_color", Color(0.6, 0.55, 0.45))
 	_close_btn.pressed.connect(func() -> void: visible = false)
 	vbox.add_child(_close_btn)
 
-	# Rich text para datos
+	# Rich text scrolleable dentro del espacio disponible
 	_content = RichTextLabel.new()
 	_content.name = "Content"
 	_content.bbcode_enabled = true
-	_content.fit_content = true
+	_content.fit_content = false # NO crecer — scrollear dentro del espacio
 	_content.scroll_active = true
 	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content.add_theme_color_override("default_color", Color(0.75, 0.72, 0.65))
