@@ -23,6 +23,9 @@ var pausar_en_evento_mayor: bool = true
 var economy: EconomySystem = EconomySystem.new()
 var planet_update: PlanetUpdateSystem = PlanetUpdateSystem.new()
 var events: EventSystem = EventSystem.new()
+var campaigns: CampaignSystem = CampaignSystem.new()
+var intel: IntelSystem = IntelSystem.new()
+var movement: MovementSystem = MovementSystem.new()
 
 # Historial de eventos
 var eventos_turno_actual: Array = []
@@ -95,8 +98,14 @@ func ejecutar_turno() -> void:
 	while historial_eventos.size() > MAX_HISTORIAL:
 		historial_eventos.pop_back()
 
-	# Fase D-F: Placeholder para campañas, intel, movimiento
-	# (se implementarán en pasos futuros)
+	# Fase D: Campañas militares
+	var resumen_camp: Dictionary = campaigns.process(planetas, turno_actual)
+
+	# Fase E: Inteligencia
+	var resumen_intel: Dictionary = intel.process(planetas, turno_actual)
+
+	# Fase F: Movimiento
+	var resumen_mov: Dictionary = movement.process(planetas, turno_actual)
 
 	# Construir resumen
 	ultimo_resumen = {
@@ -105,6 +114,9 @@ func ejecutar_turno() -> void:
 		"economia": resumen_eco,
 		"eventos_count": eventos_turno_actual.size(),
 		"eventos": eventos_turno_actual,
+		"campanas": resumen_camp,
+		"inteligencia": resumen_intel,
+		"movimiento": resumen_mov,
 	}
 
 	turno_completado.emit(ultimo_resumen)

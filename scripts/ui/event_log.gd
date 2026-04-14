@@ -6,6 +6,7 @@ var _tab_current: Button = null
 var _tab_history: Button = null
 var _showing_current: bool = true
 var _event_count_label: Label = null
+var _active_category_filter: int = -1 # -1 = todas
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -61,6 +62,18 @@ func _ready() -> void:
 	_event_count_label.add_theme_font_size_override("font_size", 10)
 	tabs.add_child(_event_count_label)
 
+	# Filtros de categoría
+	var filter_row: HBoxContainer = HBoxContainer.new()
+	filter_row.add_theme_constant_override("separation", 4)
+	vbox.add_child(filter_row)
+
+	var all_btn: Button = _create_filter_btn("Todos", -1)
+	filter_row.add_child(all_btn)
+	for cat_key: int in EventDefinitions.CATEGORY_NAMES:
+		var cat_name: String = str(EventDefinitions.CATEGORY_NAMES[cat_key])
+		var cat_btn: Button = _create_filter_btn(cat_name, cat_key)
+		filter_row.add_child(cat_btn)
+
 	# Contenido
 	_content = RichTextLabel.new()
 	_content.bbcode_enabled = true
@@ -102,6 +115,19 @@ func _on_planet_clicked(meta: Variant) -> void:
 	if galaxy_map and galaxy_map.has_method("navigate_to_planet"):
 		galaxy_map.navigate_to_planet(planet)
 
+func _create_filter_btn(text: String, category: int) -> Button:
+	var btn: Button = Button.new()
+	btn.text = text
+	btn.flat = true
+	btn.add_theme_color_override("font_color", Color(0.4, 0.38, 0.33))
+	btn.add_theme_font_size_override("font_size", 9)
+	var cap_cat: int = category
+	btn.pressed.connect(func() -> void:
+		_active_category_filter = cap_cat
+		_refresh_content()
+	)
+	return btn
+
 func _create_tab(text: String, active: bool) -> Button:
 	var btn: Button = Button.new()
 	btn.text = text
@@ -132,7 +158,17 @@ func _refresh_content() -> void:
 		_content.text = "[color=#807a6b]Sin datos de turno.[/color]"
 		return
 
-	var eventos: Array = turn_sys.eventos_turno_actual if _showing_current else turn_sys.historial_eventos
+	var eventos_raw: Array = turn_sys.eventos_turno_actual if _showing_current else turn_sys.historial_eventos
+
+	# Filtrar por categoría si hay filtro activo
+	var eventos: Array = []
+	if _active_category_filter < 0:
+		eventos = eventos_raw
+	else:
+		for ev_idx: int in eventos_raw.size():
+			var ev: Dictionary = eventos_raw[ev_idx]
+			if int(ev.get("category", -1)) == _active_category_filter:
+				eventos.append(ev)
 
 	if _event_count_label:
 		_event_count_label.text = "%d eventos" % eventos.size()

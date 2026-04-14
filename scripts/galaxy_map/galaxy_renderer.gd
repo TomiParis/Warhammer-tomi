@@ -518,6 +518,10 @@ func _draw_planet(planet: Dictionary) -> void:
 	# Punto del planeta
 	draw_circle(pos, radius, color)
 
+	# Ícono de exclamación para planetas con evento activo
+	if amenaza != null and str(amenaza) != "":
+		_draw_label(pos + Vector2(radius + 3.0, -radius - 2.0), "!", Color(0.9, 0.3, 0.15, 0.9), 10)
+
 	# Nombre para planetas canónicos (siempre visible)
 	if planet.get("es_canonico", false):
 		var nombre: String = str(planet["nombre"])
