@@ -291,18 +291,18 @@ func _draw_sector_circles() -> void:
 
 func _draw_galaxy_disc() -> void:
 	# Disco galáctico centrado en el CENTRO GALÁCTICO REAL (Vector2.ZERO)
-	# No en Terra (que está desplazada al oeste)
+	var disc_r: float = GalaxyDataProvider.GALAXY_DISC_RADIUS
 	var steps: int = 64
 	var pts: PackedVector2Array = PackedVector2Array()
 	for i: int in steps:
 		var angle: float = (float(i) / float(steps)) * TAU
-		pts.append(Vector2(cos(angle) * 4800.0, sin(angle) * 4800.0))
-	draw_colored_polygon(pts, Color(0.08, 0.07, 0.12, 0.15))
+		pts.append(Vector2(cos(angle) * disc_r, sin(angle) * disc_r))
+	draw_colored_polygon(pts, Color(0.06, 0.05, 0.10, 0.12))
 
 	# Marca del centro galáctico real
-	draw_circle(Vector2.ZERO, 30.0, Color(0.3, 0.2, 0.1, 0.25))
-	draw_circle(Vector2.ZERO, 10.0, Color(0.4, 0.3, 0.15, 0.4))
-	_draw_label(Vector2(0.0, 60.0), "CENTRO GALÁCTICO", Color(0.4, 0.3, 0.15, 0.3), 60)
+	draw_circle(Vector2.ZERO, 50.0, Color(0.3, 0.2, 0.1, 0.2))
+	draw_circle(Vector2.ZERO, 18.0, Color(0.4, 0.3, 0.15, 0.35))
+	_draw_label(Vector2(0.0, 80.0), "CENTRO GALÁCTICO", Color(0.4, 0.3, 0.15, 0.25), 70)
 
 func _draw_rift() -> void:
 	if _dp.rift_points.size() < 2:

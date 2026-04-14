@@ -5,15 +5,11 @@
 class_name GalaxyDataProvider
 
 # Espacio total de la galaxia
-const GALAXY_RADIUS: float = 4500.0
-const SOLAR_RADIUS: float = 700.0 # Solar es pequeño (~5% del área)
+const GALAXY_DISC_RADIUS: float = 4800.0 # Radio del disco galáctico desde el centro galáctico (0,0)
+const SOLAR_RADIUS: float = 600.0 # Radio del Segmentum Solar alrededor de Terra
 
-# Terra NO está en el centro galáctico. Está desplazada al oeste.
-# El centro galáctico real está a ~30% del radio, dirección map ~100° (este-sureste)
-# Invertimos: Terra está desplazada DESDE el centro galáctico
-# map 100° desde centro → godot deg_to_rad(100-90)=deg_to_rad(10) → esa es la dir del centro desde Terra
-# Entonces Terra está en la dirección OPUESTA: deg_to_rad(10+180)=deg_to_rad(190)
-const TERRA_OFFSET: Vector2 = Vector2(-1300.0, 230.0) # Terra al oeste del centro galáctico
+# Terra desplazada al oeste del centro galáctico (~26,000 ly en la realidad)
+const TERRA_OFFSET: Vector2 = Vector2(-1300.0, 230.0)
 
 # Rangos angulares CANÓNICOS de cada segmentum (en grados Godot, NO grados del mapa)
 # Conversión: godot_deg = map_deg - 90
@@ -90,10 +86,24 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 func _map_to_world(map_degrees: float, radius_fraction: float) -> Vector2:
 	# Las coordenadas del mapa canónico son relativas a Terra
-	# Desplazamos para que el centro del espacio sea el centro galáctico real
+	# radius_fraction: 0=Terra, 1=borde del disco galáctico en esa dirección
 	var godot_rad: float = deg_to_rad(map_degrees - 90.0)
-	var pos_from_terra: Vector2 = Vector2(cos(godot_rad), sin(godot_rad)) * (radius_fraction * GALAXY_RADIUS)
+	var max_dist: float = _terra_to_disc_edge(godot_rad)
+	var pos_from_terra: Vector2 = Vector2(cos(godot_rad), sin(godot_rad)) * (radius_fraction * max_dist)
 	return TERRA_OFFSET + pos_from_terra
+
+# Calcula la distancia desde Terra al borde del disco galáctico en un ángulo dado
+# Intersección rayo-círculo: rayo desde TERRA_OFFSET en dirección angle_rad
+# con el círculo de radio GALAXY_DISC_RADIUS centrado en (0,0)
+func _terra_to_disc_edge(angle_rad: float) -> float:
+	var dir: Vector2 = Vector2(cos(angle_rad), sin(angle_rad))
+	var p_dot_d: float = TERRA_OFFSET.dot(dir)
+	var p_sq: float = TERRA_OFFSET.length_squared()
+	var r_sq: float = GALAXY_DISC_RADIUS * GALAXY_DISC_RADIUS
+	var discriminant: float = p_dot_d * p_dot_d - p_sq + r_sq
+	if discriminant < 0.0:
+		return 3000.0 # Fallback
+	return -p_dot_d + sqrt(discriminant)
 
 # =============================================================================
 # PUNTO DE ENTRADA
@@ -131,49 +141,49 @@ func calculate_all(galaxy: Dictionary) -> void:
 # =============================================================================
 
 func _build_segmentum_polygons() -> void:
-	# Los segmentae son regiones centradas en TERRA (no en el centro galáctico)
-	# Los polígonos se construyen alrededor de TERRA_OFFSET
-
-	# Solar: círculo central pequeño alrededor de Terra
+	# Solar: círculo central alrededor de Terra
 	var solar_pts: PackedVector2Array = PackedVector2Array()
 	for i: int in 32:
 		var angle: float = (float(i) / 32.0) * TAU
 		solar_pts.append(TERRA_OFFSET + Vector2(cos(angle), sin(angle)) * SOLAR_RADIUS)
 	segmentum_polygons["solar"] = solar_pts
 	segmentum_centers["solar"] = TERRA_OFFSET
-	segmentum_label_pos["solar"] = TERRA_OFFSET + Vector2(0.0, -SOLAR_RADIUS - 300.0)
+	segmentum_label_pos["solar"] = TERRA_OFFSET + Vector2(0.0, -SOLAR_RADIUS - 250.0)
 
-	# Segmentae exteriores con tamaños CANÓNICOS, centrados en Terra
+	# Segmentae exteriores: desde SOLAR_RADIUS hasta el BORDE DEL DISCO GALÁCTICO
+	# El radio exterior VARÍA según la dirección (porque Terra no está en el centro)
 	for seg_key: String in SEG_ARCS:
 		var arc_data: Dictionary = SEG_ARCS[seg_key]
 		var a_start: float = deg_to_rad(float(arc_data["start"]))
 		var a_end: float = deg_to_rad(float(arc_data["end"]))
 
 		var pts: PackedVector2Array = PackedVector2Array()
-		var steps: int = 24
+		var steps: int = 32
 
-		# Arco exterior (centrado en Terra)
+		# Arco exterior: sigue el borde del disco galáctico (radio variable)
 		for i: int in steps + 1:
 			var t: float = float(i) / float(steps)
 			var angle: float = lerpf(a_start, a_end, t)
-			pts.append(TERRA_OFFSET + Vector2(cos(angle), sin(angle)) * GALAXY_RADIUS)
+			var edge_dist: float = _terra_to_disc_edge(angle)
+			pts.append(TERRA_OFFSET + Vector2(cos(angle), sin(angle)) * edge_dist)
 
-		# Arco interior (reverse)
+		# Arco interior: borde del Solar (radio fijo)
 		for i: int in range(steps, -1, -1):
 			var t: float = float(i) / float(steps)
 			var angle: float = lerpf(a_start, a_end, t)
-			pts.append(TERRA_OFFSET + Vector2(cos(angle), sin(angle)) * SOLAR_RADIUS * 1.1)
+			pts.append(TERRA_OFFSET + Vector2(cos(angle), sin(angle)) * SOLAR_RADIUS * 1.05)
 
 		segmentum_polygons[seg_key] = pts
 
-		# Centro del arco
+		# Centro del arco (a mitad de camino entre Solar y borde del disco)
 		var mid_angle: float = (a_start + a_end) / 2.0
-		var mid_radius: float = (SOLAR_RADIUS + GALAXY_RADIUS) / 2.0
+		var mid_edge: float = _terra_to_disc_edge(mid_angle)
+		var mid_radius: float = (SOLAR_RADIUS + mid_edge) / 2.0
 		segmentum_centers[seg_key] = TERRA_OFFSET + Vector2(cos(mid_angle), sin(mid_angle)) * mid_radius
 
-		# Label FUERA del disco
-		var label_radius: float = GALAXY_RADIUS + 600.0
-		segmentum_label_pos[seg_key] = TERRA_OFFSET + Vector2(cos(mid_angle), sin(mid_angle)) * label_radius
+		# Label FUERA del disco en esa dirección
+		var label_dist: float = mid_edge + 400.0
+		segmentum_label_pos[seg_key] = TERRA_OFFSET + Vector2(cos(mid_angle), sin(mid_angle)) * label_dist
 
 # =============================================================================
 # GRAN GRIETA — Trayectoria canónica
@@ -238,7 +248,8 @@ func _calculate_sector_positions(galaxy: Dictionary) -> void:
 				var dist: float = 350.0 + _rng.randf_range(-50.0, 80.0)
 				sector_positions[full_key] = TERRA_OFFSET + Vector2(cos(angle), sin(angle)) * dist
 			else:
-				# Segmentae exteriores: dentro de su arco angular canónico, desde Terra
+				# Segmentae exteriores: distribuir dentro de su arco angular
+				# El radio máximo VARÍA según la dirección (disco asimétrico desde Terra)
 				var arc: Dictionary = SEG_ARCS[seg_key]
 				var a_start_deg: float = float(arc["start"])
 				var a_end_deg: float = float(arc["end"])
@@ -251,9 +262,11 @@ func _calculate_sector_positions(galaxy: Dictionary) -> void:
 				var angle_deg: float = lerpf(usable_start, usable_end, t) + _rng.randf_range(-3.0, 3.0)
 				var angle_rad: float = deg_to_rad(angle_deg)
 
-				var inner: float = SOLAR_RADIUS * 1.4
-				var outer: float = GALAXY_RADIUS * 0.82
-				var dist: float = lerpf(inner, outer, 0.25 + t * 0.5) + _rng.randf_range(-150.0, 150.0)
+				# Radio variable: desde Solar hasta 80% del borde del disco en esa dirección
+				var edge_dist: float = _terra_to_disc_edge(angle_rad)
+				var inner: float = SOLAR_RADIUS * 1.3
+				var outer: float = edge_dist * 0.80
+				var dist: float = lerpf(inner, outer, 0.2 + t * 0.55) + _rng.randf_range(-100.0, 100.0)
 
 				sector_positions[full_key] = TERRA_OFFSET + Vector2(cos(angle_rad), sin(angle_rad)) * dist
 
