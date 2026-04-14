@@ -141,7 +141,10 @@ func _build_planet_text(p: Dictionary) -> String:
 	text += "[color=#c8c0b0]Astropata: %s[/color]\n" % ("Sí" if astropata else "No")
 	text += "[color=#c8c0b0]Ingresos: %d Throne Gelt/mes[/color]\n" % ingresos
 
-	# Amenaza actual
+	# Campaña activa
+	text += _build_campaign_section(int(p["id"]))
+
+	# Amenaza actual (sin campaña)
 	var amenaza = p.get("amenaza_actual")
 	if amenaza != null and str(amenaza) != "":
 		text += "\n[color=#8c3a3a]⚠ AMENAZA ACTIVA[/color]\n"
@@ -226,6 +229,23 @@ func _build_fleet_section(seg_key: String, sec_key: String) -> String:
 
 	return t + "\n"
 
+func _build_campaign_section(planet_id: int) -> String:
+	var gd_node: Node = get_node_or_null("/root/GameData")
+	if gd_node == null:
+		return ""
+
+	for camp: Dictionary in gd_node.campaigns:
+		if int(camp["planeta_id"]) == planet_id and not bool(camp.get("terminada", false)):
+			var frente: int = int(camp["frente"])
+			var fc: String = "6b8c5a" if frente >= 60 else ("c09a40" if frente >= 30 else "8c5a5a")
+			var t: String = "\n[color=#8c3a3a]⚔ CAMPAÑA ACTIVA[/color]\n"
+			t += "[color=#d9c05a]%s[/color]\n" % str(camp["nombre"])
+			t += "[color=#807a6b]Frente:[/color] [color=#%s]%d%%[/color] • " % [fc, frente]
+			t += "[color=#807a6b]Moral:[/color] %d • T%d\n" % [int(camp["moral"]), int(camp["duracion_turnos"])]
+			t += "[url=campaign_%d][color=#c9a84c]Ver campaña detallada[/color][/url]\n" % int(camp["id"])
+			return t
+	return ""
+
 func _build_governance_section(ctrl: Dictionary) -> String:
 	var tipo: String = str(ctrl.get("tipo", ""))
 	var nombre: String = str(ctrl.get("nombre", "Desconocido"))
@@ -289,6 +309,17 @@ func _build_governance_section(ctrl: Dictionary) -> String:
 
 func _on_meta_clicked(meta: Variant) -> void:
 	var meta_str: String = str(meta)
+	if meta_str.begins_with("campaign_"):
+		var camp_id: int = int(meta_str.substr(9))
+		var gd_node2: Node = get_node_or_null("/root/GameData")
+		if gd_node2:
+			for camp: Dictionary in gd_node2.campaigns:
+				if int(camp["id"]) == camp_id:
+					var galaxy_map = get_tree().get_first_node_in_group("galaxy_map")
+					if galaxy_map and galaxy_map.has_method("_show_campaign"):
+						galaxy_map._show_campaign(camp)
+					break
+		return
 	if meta_str.begins_with("fleet_"):
 		var sector_key: String = meta_str.substr(6)
 		var gd_node: Node = get_node_or_null("/root/GameData")

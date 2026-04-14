@@ -17,7 +17,12 @@ var rogue_traders: Array = []
 var faction_relations: Dictionary = {}
 
 # === FLOTAS ===
-var fleet_data: Dictionary = {} # battlefleets, transport_fleets, warp_routes, fleets_in_transit
+var fleet_data: Dictionary = {}
+
+# === MILITAR ===
+var military_units: Array = []
+var campaigns: Array = []
+var supply_routes: Array = []
 
 # === ACCESOS RÁPIDOS (se llenan después de generar) ===
 var planets_by_id: Dictionary = {} # id -> planet dict

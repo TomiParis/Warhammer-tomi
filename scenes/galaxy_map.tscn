@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://c4ydg0taua0ly"]
+[gd_scene load_steps=16 format=3 uid="uid://c4ydg0taua0ly"]
 
 [ext_resource type="Script" uid="uid://dx1fytsm0yj38" path="res://scripts/galaxy_map/galaxy_map.gd" id="1"]
 [ext_resource type="Script" uid="uid://camgyulsx4ksd" path="res://scripts/galaxy_map/galaxy_renderer.gd" id="2"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" uid="uid://dfbt1boksrtjx" path="res://scripts/ui/chapter_panel.gd" id="12"]
 [ext_resource type="Script" uid="uid://bb7nlkoo8jwb5" path="res://scripts/ui/fleet_panel.gd" id="13"]
 [ext_resource type="Script" uid="uid://bqrswuapey76q" path="res://scripts/ui/fleet_list_panel.gd" id="14"]
+[ext_resource type="Script" path="res://scripts/ui/campaign_panel.gd" id="15"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_star"]
 shader = ExtResource("3")
@@ -153,3 +154,15 @@ offset_top = 30.0
 offset_right = 170.0
 offset_bottom = 55.0
 script = ExtResource("14")
+
+[node name="CampaignPanel" type="PanelContainer" parent="UILayer"]
+visible = false
+anchors_preset = -1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -430.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -220.0
+script = ExtResource("15")

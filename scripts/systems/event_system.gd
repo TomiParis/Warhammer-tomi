@@ -132,6 +132,13 @@ func _generate_events_for_severity(severity: int, budget: int,
 		# Marcar planeta con amenaza
 		p["amenaza_actual"] = str(event_def["nombre"])
 
+		# Auto-generar campaña para eventos militares MEDIUM+
+		if severity >= EventDefinitions.Severity.MEDIUM:
+			var cat: int = int(event_def["category"])
+			if cat in [EventDefinitions.Category.MILITARY, EventDefinitions.Category.CHAOS,
+				EventDefinitions.Category.XENOS]:
+				_auto_create_campaign(p, event_def, severity)
+
 		# Reducir peso del planeta para futuros eventos este turno
 		pesos[planet_idx] *= 0.1
 
@@ -217,6 +224,42 @@ func _eval_single(expr: String, lealtad: int, fe: int, chaos: int, gs: int,
 		return int(val_map.get(var_name, 50)) > threshold
 
 	return false # Condición no reconocida
+
+func _auto_create_campaign(planet: Dictionary, event_def: Dictionary, severity: int) -> void:
+	var gd_node: Node = Engine.get_main_loop().root.get_node_or_null("GameData")
+	if gd_node == null:
+		return
+
+	# Verificar que no haya ya una campaña en este planeta
+	var camp_sys: CampaignSystem = CampaignSystem.new()
+	var existing: Dictionary = camp_sys.get_campaign_at_planet(gd_node.campaigns, int(planet["id"]))
+	if not existing.is_empty():
+		return
+
+	# Determinar tipo de enemigo por categoría
+	var enemigo: String = "rebellion"
+	var cat: int = int(event_def["category"])
+	if cat == EventDefinitions.Category.CHAOS:
+		enemigo = "chaos"
+	elif cat == EventDefinitions.Category.XENOS:
+		var ev_id: String = str(event_def["id"])
+		if ev_id.contains("ork"): enemigo = "ork"
+		elif ev_id.contains("genestealer"): enemigo = "genestealer"
+		elif ev_id.contains("tyranid") or ev_id.contains("hive"): enemigo = "tyranid"
+		else: enemigo = "ork"
+
+	# Poder enemigo basado en severidad
+	var poder_base: int = 5000
+	if severity == EventDefinitions.Severity.MAJOR:
+		poder_base = rng.randi_range(20000, 80000)
+	elif severity == EventDefinitions.Severity.APOCALYPTIC:
+		poder_base = rng.randi_range(100000, 500000)
+	else:
+		poder_base = rng.randi_range(5000, 20000)
+
+	var camp: Dictionary = camp_sys.create_campaign(planet, enemigo, poder_base,
+		"defensa_planetaria", gd_node.military_units)
+	gd_node.campaigns.append(camp)
 
 func _apply_effects(planet: Dictionary, efectos: Dictionary) -> void:
 	for key: String in efectos:

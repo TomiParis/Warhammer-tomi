@@ -26,6 +26,7 @@ const PAN_SPEED: float = 1.0
 @onready var minimap_container: Control = $UILayer/Minimap
 @onready var chapter_panel: PanelContainer = $UILayer/ChapterPanel
 @onready var fleet_list_panel: PanelContainer = $UILayer/FleetListPanel
+@onready var campaign_panel: PanelContainer = $UILayer/CampaignPanel
 
 # === DATOS ===
 var galaxy: Dictionary = {}
@@ -92,6 +93,13 @@ func _ready() -> void:
 	print(">>> Flotas: %d Battlefleets, %d Transportes, %d Rutas Warp" % [
 		fl_data["battlefleets"].size(), fl_data["transport_fleets"].size(), fl_data["warp_routes"].size()
 	])
+
+	# Generar unidades militares (guarniciones)
+	var mil_gen: MilitaryGenerator = MilitaryGenerator.new()
+	var mil_units: Array = mil_gen.generate(galaxy, 42)
+	if gd_node:
+		gd_node.military_units = mil_units
+	print(">>> Militar: %d regimientos generados" % mil_units.size())
 
 	# Pasar datos al renderer
 	renderer.setup(galaxy, data_provider, self)
@@ -354,6 +362,15 @@ func _show_fleet(_bf: Dictionary) -> void:
 
 func _hide_fleet() -> void:
 	pass
+
+func _show_campaign(camp: Dictionary) -> void:
+	var gd_node: Node = get_node_or_null("/root/GameData")
+	if campaign_panel and campaign_panel.has_method("show_campaign"):
+		var mil_units: Array = gd_node.military_units if gd_node else []
+		campaign_panel.show_campaign(camp, mil_units)
+		campaign_panel.visible = true
+		if info_panel:
+			info_panel.visible = false
 
 func _show_fleet_transports() -> void:
 	if fleet_list_panel and fleet_list_panel.has_method("_switch_tab"):

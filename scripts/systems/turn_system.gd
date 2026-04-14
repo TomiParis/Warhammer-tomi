@@ -29,6 +29,7 @@ var movement: MovementSystem = MovementSystem.new()
 var chapter_sys: ChapterSystem = ChapterSystem.new()
 var governance: GovernanceSystem = GovernanceSystem.new()
 var fleet_sys: FleetSystem = FleetSystem.new()
+var supply: SupplySystem = SupplySystem.new()
 
 # Historial de eventos
 var eventos_turno_actual: Array = []
@@ -114,8 +115,14 @@ func ejecutar_turno() -> void:
 	var ch_list: Array = gd_node.chapters if gd_node else []
 	var resumen_chapters: Dictionary = chapter_sys.process(ch_list, planetas, turno_actual)
 
-	# Fase G: Campañas militares
-	var resumen_camp: Dictionary = campaigns.process(planetas, turno_actual)
+	# Fase G: Campañas militares (resolución completa)
+	var camp_list: Array = gd_node.campaigns if gd_node else []
+	var mil_units: Array = gd_node.military_units if gd_node else []
+	var resumen_camp: Dictionary = campaigns.process(camp_list, mil_units, turno_actual)
+
+	# Fase G.2: Suministros
+	var sup_routes: Array = gd_node.supply_routes if gd_node else []
+	var resumen_supply: Dictionary = supply.process(sup_routes, camp_list, fl_data)
 
 	# Fase H: Inteligencia
 	var resumen_intel: Dictionary = intel.process(planetas, turno_actual)
