@@ -114,13 +114,13 @@ func ejecutar_turno() -> void:
 	var ch_list: Array = gd_node.chapters if gd_node else []
 	var resumen_chapters: Dictionary = chapter_sys.process(ch_list, planetas, turno_actual)
 
-	# Fase E: Campañas militares
+	# Fase G: Campañas militares
 	var resumen_camp: Dictionary = campaigns.process(planetas, turno_actual)
 
-	# Fase E: Inteligencia
+	# Fase H: Inteligencia
 	var resumen_intel: Dictionary = intel.process(planetas, turno_actual)
 
-	# Fase F: Movimiento
+	# Fase I: Movimiento
 	var resumen_mov: Dictionary = movement.process(planetas, turno_actual)
 
 	# Construir resumen
