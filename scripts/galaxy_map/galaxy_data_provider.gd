@@ -5,12 +5,12 @@
 class_name GalaxyDataProvider
 
 # Espacio total de la galaxia
-var GALAXY_DISC_RADIUS: float = GalaxyConfig.GALAXY_DISC_RADIUS # Radio del disco visual desde el centro galáctico (0,0)
-var SOLAR_RADIUS: float = GalaxyConfig.SOLAR_RADIUS # Radio del Segmentum Solar alrededor de Terra
-var MAP_RADIUS: float = GalaxyConfig.MAP_RADIUS # Radio fijo para posicionar elementos canónicos desde Terra
+var GALAXY_DISC_RADIUS: float = 4800.0 # Radio del disco visual desde el centro galáctico (0,0)
+var SOLAR_RADIUS: float = 600.0 # Radio del Segmentum Solar alrededor de Terra
+var MAP_RADIUS: float = 4500.0 # Radio fijo para posicionar elementos canónicos desde Terra
 
 # Terra desplazada al oeste del centro galáctico (~26,000 ly en la realidad)
-var TERRA_OFFSET: Vector2 = GalaxyConfig.TERRA_OFFSET
+var TERRA_OFFSET: Vector2 = Vector2(-1300.0, 230.0)
 
 # Rangos angulares CANÓNICOS de cada segmentum (en grados Godot, NO grados del mapa)
 # Conversión: godot_deg = map_deg - 90
@@ -18,10 +18,20 @@ var TERRA_OFFSET: Vector2 = GalaxyConfig.TERRA_OFFSET
 # Ultima: map 45°-200° → godot 315°-470° (este, 155° arco, EL MÁS GRANDE)
 # Tempestus: map 200°-270° → godot 110°-180° (sur-suroeste, 70° arco)
 # Pacificus: map 270°-315° → godot 180°-225° (oeste-noroeste, 45° arco)
-# Datos leídos de archivos centralizados
-var SEG_ARCS: Dictionary = GalaxyConfig.SEG_ARCS
-var SEG_COLORS: Dictionary = GalaxyConfig.SEG_COLORS
-var PLANET_COLORS: Dictionary = PlanetTypes.COLORS
+# Datos leídos de archivos centralizados (se inicializan en _init)
+var SEG_ARCS: Dictionary = {}
+var SEG_COLORS: Dictionary = {}
+var PLANET_COLORS: Dictionary = {}
+
+func _init() -> void:
+	SEG_ARCS = GalaxyConfig.SEG_ARCS
+	SEG_COLORS = GalaxyConfig.SEG_COLORS
+	PLANET_COLORS = PlanetTypes.COLORS
+	GALAXY_DISC_RADIUS = GalaxyConfig.GALAXY_DISC_RADIUS
+	SOLAR_RADIUS = GalaxyConfig.SOLAR_RADIUS
+	MAP_RADIUS = GalaxyConfig.MAP_RADIUS
+	TERRA_OFFSET = GalaxyConfig.TERRA_OFFSET
+	astronomican_radius = GalaxyConfig.ASTRONOMICAN_RADIUS
 
 # --- Datos calculados ---
 var segmentum_polygons: Dictionary = {}
@@ -37,7 +47,7 @@ var planet_data_by_id: Dictionary = {}
 var rift_points: PackedVector2Array = PackedVector2Array()
 var eye_of_terror_pos: Vector2 = Vector2.ZERO
 var terra_pos: Vector2 = Vector2.ZERO
-var astronomican_radius: float = GalaxyConfig.ASTRONOMICAN_RADIUS
+var astronomican_radius: float = 3800.0
 
 var warp_storms: Array = []
 var enemy_territories: Array = []
