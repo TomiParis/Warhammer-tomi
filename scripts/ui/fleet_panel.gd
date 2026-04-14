@@ -9,43 +9,30 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.04, 0.04, 0.07, 0.92)
-	style.border_color = Color(0.3, 0.45, 0.6, 0.3)
-	style.border_width_left = 2
-	style.set_corner_radius_all(0)
-	style.content_margin_left = 12.0
-	style.content_margin_right = 12.0
-	style.content_margin_top = 8.0
-	style.content_margin_bottom = 8.0
+	style.bg_color = Color(0.04, 0.04, 0.07, 0.88)
+	style.border_color = Color(0.3, 0.45, 0.6, 0.2)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(2)
+	style.content_margin_left = 6.0
+	style.content_margin_right = 6.0
+	style.content_margin_top = 4.0
+	style.content_margin_bottom = 4.0
 	add_theme_stylebox_override("panel", style)
 
-	# Posición: a la derecha de la lista de flotas
+	# Posición: a la derecha de la lista, se ajusta al contenido
 	anchor_left = 0.0
 	anchor_top = 0.0
-	offset_left = 170.0 # A la derecha de FleetListPanel (160+10)
+	offset_left = 170.0
 	offset_top = 50.0
-	custom_minimum_size = Vector2(180, 280)
-
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(vbox)
-
-	_close_btn = Button.new()
-	_close_btn.text = "✕"
-	_close_btn.flat = true
-	_close_btn.custom_minimum_size = Vector2(30, 25)
-	_close_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
-	_close_btn.add_theme_color_override("font_color", Color(0.6, 0.55, 0.45))
-	_close_btn.pressed.connect(func() -> void: visible = false)
-	vbox.add_child(_close_btn)
+	custom_minimum_size = Vector2(0, 0) # Se ajusta al contenido
 
 	_content = RichTextLabel.new()
 	_content.bbcode_enabled = true
-	_content.fit_content = false
-	_content.scroll_active = true
-	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_content.add_theme_color_override("default_color", Color(0.75, 0.72, 0.65))
-	vbox.add_child(_content)
+	_content.fit_content = true
+	_content.scroll_active = false
+	_content.add_theme_color_override("default_color", Color(0.7, 0.68, 0.6))
+	_content.add_theme_font_size_override("normal_font_size", 10)
+	add_child(_content)
 
 func show_battlefleet(bf: Dictionary) -> void:
 	if _content == null:
@@ -63,47 +50,31 @@ func show_transport_summary(fleet_data: Dictionary) -> void:
 
 func _build_bf_text(bf: Dictionary) -> String:
 	var t: String = ""
-
-	t += "[color=#5a8ab0]⚓[/color] [color=#d9c05a][b]%s[/b][/color]\n" % str(bf["nombre"])
-	t += "[color=#807a6b]Armada Imperial[/color]\n"
-
-	t += "[color=#999080]COMANDANTE[/color]\n"
-	t += "[color=#c8c0b0]%s[/color]\n" % str(bf["admiral"])
-
 	var estado: String = str(bf["estado"])
-	var estado_col: String = "6b8c5a"
+	var ec: String = "6b8c5a"
 	match estado:
-		"desplegada": estado_col = "c09a40"
-		"combate": estado_col = "8c5a5a"
-		"reparaciones": estado_col = "c09a40"
-	t += "[color=#999080]ESTADO[/color]\n"
-	t += "[color=#%s]%s[/color]\n" % [estado_col, estado.to_upper()]
+		"desplegada": ec = "c09a40"
+		"combate": ec = "8c5a5a"
+		"reparaciones": ec = "c09a40"
 
-	var capital: int = int(bf["naves_capital"])
-	var cruceros: int = int(bf["cruceros"])
-	var escoltas: int = int(bf["escoltas"])
-	var total: int = capital + cruceros + escoltas
-	t += "[color=#999080]COMPOSICIÓN[/color]\n"
-	t += " Capital: [color=#c8c0b0]%d[/color]\n" % capital
-	t += " Cruceros: [color=#c8c0b0]%d[/color]\n" % cruceros
-	t += " Escoltas: [color=#c8c0b0]%d[/color]\n" % escoltas
-	t += " [color=#d9c05a]Total: %d naves[/color]\n" % total
+	var cap: int = int(bf["naves_capital"])
+	var cru: int = int(bf["cruceros"])
+	var esc: int = int(bf["escoltas"])
 
-	var poder: int = capital * 10 + cruceros * 4 + escoltas
-	var poder_bar: int = clampi(floori(float(poder) / 50.0), 0, 10)
-	var poder_col: String = "6b8c5a" if poder > 300 else ("c09a40" if poder > 150 else "8c5a5a")
-	t += "[color=#999080]PODER DE COMBATE[/color]\n"
-	t += " [color=#%s]%s[/color][color=#333]%s[/color] %d\n" % [
-		poder_col, "█".repeat(poder_bar), "░".repeat(10 - poder_bar), poder]
-
-	t += "[color=#999080]TRIPULACIÓN[/color]\n"
-	t += _stat_line("Moral", int(bf["moral"]))
-	t += _stat_line("Exp", int(bf["experiencia"]))
-
-	t += "[color=#999080]ASIGNACIÓN[/color]\n"
-	t += " [color=#c8c0b0]%s[/color]\n" % str(bf["sector"])
-
+	t += "[color=#d9c05a][b]%s[/b][/color]\n" % str(bf["nombre"])
+	t += "[color=#807a6b]%s[/color]\n" % str(bf["admiral"])
+	t += "[color=#%s]%s[/color] [color=#605a4a]%s[/color]\n" % [ec, estado.to_upper(), str(bf["sector"])]
+	t += "[color=#807a6b]%d cap %d cru %d esc[/color]\n" % [cap, cru, esc]
+	t += "[color=#d9c05a]%d naves[/color]\n" % (cap + cru + esc)
+	t += _bar("Moral", int(bf["moral"]))
+	t += _bar("Exp", int(bf["experiencia"]))
 	return t
+
+func _bar(label: String, value: int) -> String:
+	var f: int = floori(float(value) / 12.5)
+	var e: int = 8 - f
+	var c: String = "6b8c5a" if value >= 60 else ("c09a40" if value >= 30 else "8c5a5a")
+	return "[color=#605a4a]%s[/color] [color=#%s]%s[/color][color=#333]%s[/color] %d\n" % [label, c, "█".repeat(f), "░".repeat(e), value]
 
 func _build_transport_text(fleet_data: Dictionary) -> String:
 	var t: String = ""
