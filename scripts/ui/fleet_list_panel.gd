@@ -9,12 +9,12 @@ var _minimized: bool = true
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: arriba-izquierda, al lado del filtro
+	# Posición: izquierda, debajo del breadcrumb
 	anchor_left = 0.0
 	anchor_top = 0.0
-	offset_left = 140.0
+	offset_left = 5.0
 	offset_top = 30.0
-	custom_minimum_size = Vector2(200, 0)
+	custom_minimum_size = Vector2(190, 0)
 
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0.03, 0.03, 0.06, 0.5)

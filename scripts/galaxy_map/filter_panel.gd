@@ -13,12 +13,15 @@ var _minimized: bool = false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: lateral izquierdo, compacto
-	anchor_left = 0.0
-	anchor_top = 0.0
-	offset_left = 5.0
-	offset_top = 30.0
-	custom_minimum_size = Vector2(130, 0)
+	# Posición: arriba del minimap, abajo-derecha
+	anchor_left = 1.0
+	anchor_top = 1.0
+	anchor_bottom = 1.0
+	offset_left = -600.0
+	offset_right = -440.0
+	offset_top = -30.0 # Solo botón cuando minimizado
+	offset_bottom = -5.0
+	custom_minimum_size = Vector2(0, 0)
 
 	_update_style()
 
@@ -53,6 +56,11 @@ func _on_toggle() -> void:
 	_minimized = not _minimized
 	_scroll.visible = not _minimized
 	_toggle_btn.text = "► FILTROS" if _minimized else "▼ FILTROS"
+	# Expandir hacia arriba
+	if _minimized:
+		offset_top = -30.0
+	else:
+		offset_top = -320.0
 	_update_style()
 
 func _update_style() -> void:
