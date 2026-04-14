@@ -32,10 +32,13 @@ func process(campaigns: Array, units: Array, turno: int) -> Dictionary:
 		var poder_imperial: float = _calc_imperial_power(camp, units)
 		camp["fuerza_imperial_total"] = int(poder_imperial)
 
-		# 2. Poder enemigo (decrece lentamente si frente alto)
+		# 2. Poder enemigo (refuerzos + desgaste según frente)
 		var poder_enemigo: float = float(int(camp["fuerzas_enemigas"]))
 		if int(camp["frente"]) > 70:
-			poder_enemigo *= 0.98 # Enemigo se debilita si está perdiendo
+			poder_enemigo *= 0.98 # Enemigo se debilita si pierde
+		elif int(camp["frente"]) < 40:
+			# Enemigo recibe refuerzos si está ganando (2-5% por turno)
+			poder_enemigo *= 1.0 + rng.randf_range(0.02, 0.05)
 
 		# 3. Attrition
 		_process_attrition(camp, units, poder_imperial, poder_enemigo)
@@ -184,8 +187,9 @@ func _process_attrition(camp: Dictionary, units: Array, poder_imp: float, poder_
 		{"attrition_mult": 1.0})
 	var att_mult: float = float(estrategia["attrition_mult"])
 
-	var bajas_imp: int = int(poder_enem * (1.0 - ratio) * 0.02 * att_mult)
-	var bajas_enem: int = int(poder_imp * ratio * 0.02)
+	# Attrition reducido para guerras largas (0.8% en vez de 2%)
+	var bajas_imp: int = int(poder_enem * (1.0 - ratio) * 0.008 * att_mult)
+	var bajas_enem: int = int(poder_imp * ratio * 0.008)
 
 	camp["bajas_imperiales"] = int(camp["bajas_imperiales"]) + bajas_imp
 	camp["bajas_enemigas"] = int(camp["bajas_enemigas"]) + bajas_enem
@@ -230,8 +234,9 @@ func _update_moral(camp: Dictionary, units: Array, poder_imp: float, poder_enem:
 func _update_front(camp: Dictionary, poder_imp: float, poder_enem: float) -> void:
 	if poder_imp + poder_enem <= 0.0:
 		return
+	# Frente se mueve lento (1-3% por turno) para guerras largas
 	var diferencia: float = (poder_imp - poder_enem) / maxf(poder_imp, poder_enem)
-	var cambio: int = int(diferencia * float(rng.randi_range(2, 8)))
+	var cambio: int = int(diferencia * float(rng.randi_range(1, 3)))
 	camp["frente"] = clampi(int(camp["frente"]) + cambio, 0, 100)
 
 func _generate_narrative(camp: Dictionary, turno: int) -> void:
