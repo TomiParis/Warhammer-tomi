@@ -31,7 +31,7 @@ func _ready() -> void:
 	_content.fit_content = true
 	_content.scroll_active = false
 	_content.add_theme_color_override("default_color", Color(0.7, 0.68, 0.6))
-	_content.add_theme_font_size_override("normal_font_size", 10)
+	_content.add_theme_font_size_override("normal_font_size", 13)
 	add_child(_content)
 
 func show_battlefleet(bf: Dictionary) -> void:
