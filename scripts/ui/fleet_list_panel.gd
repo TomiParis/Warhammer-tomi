@@ -9,14 +9,14 @@ var _minimized: bool = true
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: izquierda, en la parte inferior (no se superpone con filtros)
+	# Posición: izquierda, parte inferior (debajo de filtros, arriba del EventLog)
 	anchor_left = 0.0
 	anchor_top = 1.0
 	anchor_bottom = 1.0
 	offset_left = 5.0
-	offset_top = -60.0 # Solo el botón cuando minimizado
-	offset_bottom = -160.0 # Encima del EventLog
-	custom_minimum_size = Vector2(230, 0)
+	offset_top = -50.0 # Solo el botón cuando minimizado
+	offset_bottom = -5.0
+	custom_minimum_size = Vector2(220, 0)
 
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0.03, 0.03, 0.06, 0.5)
@@ -64,11 +64,10 @@ func _on_toggle() -> void:
 	_minimized = not _minimized
 	_scroll_container.visible = not _minimized
 	_toggle_btn.text = "▼ FLOTAS" if not _minimized else "► FLOTAS"
-	# Expandir hacia arriba cuando se abre
 	if _minimized:
-		offset_top = -60.0
+		offset_top = -50.0
 	else:
-		offset_top = -450.0 # Más espacio para la lista
+		offset_top = -400.0
 	_update_style()
 	if not _minimized:
 		_refresh()
