@@ -12,11 +12,11 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = Vector2(MINIMAP_SIZE, MINIMAP_SIZE)
 
-	# Posición: esquina inferior izquierda
-	anchor_left = 0.0
+	# Posición: abajo-derecha, al lado izquierdo del TurnPanel
+	anchor_left = 1.0
 	anchor_top = 1.0
-	offset_left = 10.0
-	offset_top = -MINIMAP_SIZE - 10.0
+	offset_left = -330.0 - MINIMAP_SIZE - 5.0 # Pegado a la izquierda del TurnPanel
+	offset_top = -MINIMAP_SIZE - 5.0
 	size = Vector2(MINIMAP_SIZE, MINIMAP_SIZE)
 
 func setup(map_ref: Node2D, dp: GalaxyDataProvider) -> void:

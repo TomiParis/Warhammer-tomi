@@ -164,30 +164,96 @@ func _on_turno_completado(resumen: Dictionary) -> void:
 		_balance_label.add_theme_color_override("font_color",
 			Color(0.5, 0.6, 0.4) if bal >= 0 else Color(0.7, 0.35, 0.3))
 
-	# Actualizar resumen
+	# Actualizar resumen completo
 	if _resumen_content:
-		var ev_count: int = int(resumen.get("eventos_count", 0))
-		var camp: Dictionary = resumen.get("campanas", {})
-		var mov: Dictionary = resumen.get("movimiento", {})
-
-		var t: String = ""
-		t += "[color=#807a6b]Ingresos:[/color] %s  " % _fmt(int(eco.get("ingresos_total", 0)))
-		t += "[color=#807a6b]Gastos:[/color] %s\n" % _fmt(int(eco.get("gastos_total", 0)))
-		t += "[color=#807a6b]Eventos:[/color] %d  " % ev_count
-		t += "[color=#807a6b]Campañas:[/color] %d\n" % int(camp.get("campanas_activas", 0))
-
-		var llegadas: int = int(mov.get("llegadas", 0))
-		if llegadas > 0:
-			t += "[color=#6b8c5a]%d llegaron a destino[/color]\n" % llegadas
-		var resueltas: int = int(camp.get("campanas_resueltas", 0))
-		if resueltas > 0:
-			t += "[color=#6b8c5a]%d campañas resueltas[/color]\n" % resueltas
-
-		_resumen_content.text = t
+		_resumen_content.text = _build_resumen(resumen)
 
 	var ts: Node = get_node_or_null("/root/TurnSystem")
 	if ts and not ts.auto_turno and _auto_btn:
 		_auto_btn.set_pressed_no_signal(false)
+
+func _build_resumen(resumen: Dictionary) -> String:
+	var eco: Dictionary = resumen.get("economia", {})
+	var ev_count: int = int(resumen.get("eventos_count", 0))
+	var camp: Dictionary = resumen.get("campanas", {})
+	var mov: Dictionary = resumen.get("movimiento", {})
+	var intel_d: Dictionary = resumen.get("inteligencia", {})
+	var eventos: Array = resumen.get("eventos", [])
+
+	var ingresos: int = int(eco.get("ingresos_total", 0))
+	var gastos: int = int(eco.get("gastos_total", 0))
+	var balance: int = int(eco.get("balance", 0))
+	var tesoro: int = int(eco.get("throne_gelt", 0))
+
+	var t: String = ""
+
+	# Economía
+	t += "[color=#999080]ECONOMÍA[/color]\n"
+	var bal_c: String = "6b8c5a" if balance >= 0 else "8c5a5a"
+	t += " Ingresos: [color=#c8c0b0]%s TG[/color]\n" % _fmt(ingresos)
+	t += " Gastos:   [color=#c8c0b0]%s TG[/color]\n" % _fmt(gastos)
+	t += " Balance:  [color=#%s]%s%s TG[/color]\n" % [bal_c, "+" if balance >= 0 else "", _fmt(balance)]
+	t += " Tesoro:   [color=#d9c05a]%s TG[/color]\n" % _fmt(tesoro)
+
+	# Ingresos por segmentum
+	var ing_seg: Dictionary = eco.get("ingresos_por_segmentum", {})
+	if not ing_seg.is_empty():
+		t += "\n[color=#999080]INGRESOS POR SEGMENTUM[/color]\n"
+		for seg_key: String in ing_seg:
+			var seg_name: String = seg_key.capitalize()
+			if GalaxyConfig.SEGMENTUM_CONFIG.has(seg_key):
+				seg_name = str(GalaxyConfig.SEGMENTUM_CONFIG[seg_key]["nombre"])
+			t += " [color=#807a6b]%s:[/color] %s\n" % [seg_name, _fmt(int(ing_seg[seg_key]))]
+
+	# Estado del Imperium
+	var gd_node: Node = get_node_or_null("/root/GameData")
+	if gd_node:
+		var planetas: Array = gd_node.get_all_planets()
+		var amenazas: int = 0
+		var baja_lealtad: int = 0
+		var nihilus_count: int = 0
+		for p_idx: int in planetas.size():
+			var p: Dictionary = planetas[p_idx]
+			if p.get("amenaza_actual") != null:
+				amenazas += 1
+			if int(p["lealtad_imperial"]) < 30:
+				baja_lealtad += 1
+			if str(p["lado_grieta"]) == "nihilus":
+				nihilus_count += 1
+
+		t += "\n[color=#999080]ESTADO DEL IMPERIUM[/color]\n"
+		t += " Planetas: [color=#c8c0b0]%d[/color]\n" % planetas.size()
+		t += " Con amenaza: [color=#8c5a5a]%d[/color]\n" % amenazas
+		t += " Lealtad baja: [color=#c09a40]%d[/color]\n" % baja_lealtad
+		t += " En Nihilus: [color=#807a6b]%d[/color]\n" % nihilus_count
+
+	# Campañas y movimiento
+	t += "\n[color=#999080]OPERACIONES[/color]\n"
+	t += " Campañas activas: [color=#c8c0b0]%d[/color]\n" % int(camp.get("campanas_activas", 0))
+	t += " En tránsito: [color=#c8c0b0]%d[/color]\n" % int(mov.get("en_transito", 0))
+	t += " Mensajes recibidos: [color=#c8c0b0]%d[/color]\n" % int(intel_d.get("mensajes_recibidos", 0))
+
+	var llegadas: int = int(mov.get("llegadas", 0))
+	if llegadas > 0:
+		t += " [color=#6b8c5a]%d unidades llegaron[/color]\n" % llegadas
+	var resueltas: int = int(camp.get("campanas_resueltas", 0))
+	if resueltas > 0:
+		t += " [color=#6b8c5a]%d campañas resueltas[/color]\n" % resueltas
+
+	# Eventos de este turno (resumen)
+	if ev_count > 0:
+		t += "\n[color=#999080]EVENTOS (%d)[/color]\n" % ev_count
+		var max_show: int = mini(ev_count, 5)
+		for i: int in max_show:
+			var ev: Dictionary = eventos[i]
+			var sev: int = int(ev.get("severity", 0))
+			var sev_color: Color = EventDefinitions.SEVERITY_COLORS.get(sev, Color.WHITE)
+			var hex: String = sev_color.to_html(false)
+			t += " [color=#%s]●[/color] %s — %s\n" % [hex, str(ev.get("nombre", "?")), str(ev.get("planeta_nombre", "?"))]
+		if ev_count > 5:
+			t += " [color=#605a4a]...y %d más[/color]\n" % (ev_count - 5)
+
+	return t
 
 func _fmt(n: int) -> String:
 	if abs(n) >= 1_000_000:
