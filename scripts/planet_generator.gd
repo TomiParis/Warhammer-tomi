@@ -59,8 +59,12 @@ func _build_hierarchy(galaxy: Dictionary) -> Dictionary:
 			var subsectores: Array = sec_data["subsectores"]
 			total_subsectors += subsectores.size()
 
-	# Distribuir ~1000 planetas entre subsectores
-	var base_per_sub: float = 1000.0 / float(total_subsectors)
+	# Calcular total de planetas desde la distribución
+	var total_planets: int = 0
+	for tipo: String in GameData.TYPE_DISTRIBUTION:
+		total_planets += int(GameData.TYPE_DISTRIBUTION[tipo])
+
+	var base_per_sub: float = float(total_planets) / float(total_subsectors)
 
 	for seg_key: String in GameData.GALAXY_HIERARCHY:
 		var seg_data: Dictionary = GameData.GALAXY_HIERARCHY[seg_key]
