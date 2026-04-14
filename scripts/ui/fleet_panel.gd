@@ -19,12 +19,12 @@ func _ready() -> void:
 	style.content_margin_bottom = 8.0
 	add_theme_stylebox_override("panel", style)
 
-	# Posición: izquierda, debajo de la lista, mismo ancho
+	# Posición: a la derecha de la lista de flotas
 	anchor_left = 0.0
 	anchor_top = 0.0
-	offset_left = 5.0
-	offset_top = 315.0
-	custom_minimum_size = Vector2(190, 300)
+	offset_left = 170.0 # A la derecha de FleetListPanel (160+10)
+	offset_top = 50.0
+	custom_minimum_size = Vector2(180, 280)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL

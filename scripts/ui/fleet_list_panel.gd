@@ -9,12 +9,12 @@ var _minimized: bool = true
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: izquierda, debajo del breadcrumb
+	# Posición: izquierda, debajo del breadcrumb, angosto
 	anchor_left = 0.0
 	anchor_top = 0.0
 	offset_left = 5.0
 	offset_top = 30.0
-	custom_minimum_size = Vector2(190, 0)
+	custom_minimum_size = Vector2(160, 0)
 
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0.03, 0.03, 0.06, 0.5)
@@ -36,7 +36,7 @@ func _ready() -> void:
 
 	_scroll_container = ScrollContainer.new()
 	_scroll_container.visible = false
-	_scroll_container.custom_minimum_size = Vector2(190, 280)
+	_scroll_container.custom_minimum_size = Vector2(150, 250)
 	main_vbox.add_child(_scroll_container)
 
 	_content = RichTextLabel.new()
