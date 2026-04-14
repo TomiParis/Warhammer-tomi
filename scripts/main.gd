@@ -13,7 +13,7 @@ func _ready() -> void:
 
 	var start: int = Time.get_ticks_msec()
 
-	var generator: PlanetGenerator = PlanetGenerator.new()
+	var generator: GalaxyGenerator = GalaxyGenerator.new()
 	galaxy = generator.generate_galaxy(42)
 
 	var elapsed: int = Time.get_ticks_msec() - start
@@ -107,7 +107,7 @@ func _print_type_distribution() -> void:
 	for t_idx: int in types_sorted.size():
 		var tipo: String = str(types_sorted[t_idx])
 		var count: int = int(type_counts[tipo])
-		var nombre: String = str(GameData.PLANET_TYPES[tipo]["nombre"]) if GameData.PLANET_TYPES.has(tipo) else tipo
+		var nombre: String = str(PlanetTypes.TYPES[tipo]["nombre"]) if PlanetTypes.TYPES.has(tipo) else tipo
 		var pct: float = (float(count) / float(total)) * 100.0
 		var bar: String = "#".repeat(int(pct))
 		print("  %-25s %4d (%5.1f%%) %s" % [nombre, count, pct, bar])
@@ -125,7 +125,7 @@ func _print_canonical_planets() -> void:
 		if not planet["es_canonico"]:
 			continue
 		var tipo: String = str(planet["tipo"])
-		var tipo_name: String = str(GameData.PLANET_TYPES[tipo]["nombre"]) if GameData.PLANET_TYPES.has(tipo) else tipo
+		var tipo_name: String = str(PlanetTypes.TYPES[tipo]["nombre"]) if PlanetTypes.TYPES.has(tipo) else tipo
 		var flags: Array = planet["flags"]
 		var flags_str: String = ""
 		if not flags.is_empty():
@@ -169,7 +169,7 @@ func _print_first_planets_per_segmentum() -> void:
 						break
 					var planet: Dictionary = planetas[p_idx]
 					var tipo: String = str(planet["tipo"])
-					var tipo_name: String = str(GameData.PLANET_TYPES[tipo]["nombre"]) if GameData.PLANET_TYPES.has(tipo) else tipo
+					var tipo_name: String = str(PlanetTypes.TYPES[tipo]["nombre"]) if PlanetTypes.TYPES.has(tipo) else tipo
 					print("    %-20s | %-22s | Pop: %-15s | %s > %s" % [
 						str(planet["nombre"]),
 						tipo_name,
