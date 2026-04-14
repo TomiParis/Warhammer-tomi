@@ -1,0 +1,146 @@
+## event_log.gd - Log de eventos con pestañas y filtros
+extends PanelContainer
+
+var _content: RichTextLabel = null
+var _tab_current: Button = null
+var _tab_history: Button = null
+var _showing_current: bool = true
+var _event_count_label: Label = null
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_STOP
+
+	# Posición: bottom-center
+	anchor_left = 0.15
+	anchor_right = 0.85
+	anchor_top = 1.0
+	anchor_bottom = 1.0
+	offset_top = -200.0
+	offset_bottom = -5.0
+
+	# Estilo
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.03, 0.03, 0.06, 0.88)
+	style.border_color = Color(0.45, 0.42, 0.3, 0.2)
+	style.border_width_top = 1
+	style.set_corner_radius_all(0)
+	style.set_content_margin_all(8)
+	add_theme_stylebox_override("panel", style)
+
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	add_child(vbox)
+
+	# Fila de pestañas
+	var tabs: HBoxContainer = HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 10)
+	vbox.add_child(tabs)
+
+	var title: Label = Label.new()
+	title.text = "EVENTOS"
+	title.add_theme_color_override("font_color", Color(0.7, 0.65, 0.5))
+	title.add_theme_font_size_override("font_size", 12)
+	tabs.add_child(title)
+
+	_tab_current = _create_tab("Este Turno", true)
+	_tab_current.pressed.connect(func() -> void: _show_tab(true))
+	tabs.add_child(_tab_current)
+
+	_tab_history = _create_tab("Historial", false)
+	_tab_history.pressed.connect(func() -> void: _show_tab(false))
+	tabs.add_child(_tab_history)
+
+	# Spacer
+	var spacer: Control = Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tabs.add_child(spacer)
+
+	_event_count_label = Label.new()
+	_event_count_label.text = "0 eventos"
+	_event_count_label.add_theme_color_override("font_color", Color(0.5, 0.48, 0.42))
+	_event_count_label.add_theme_font_size_override("font_size", 10)
+	tabs.add_child(_event_count_label)
+
+	# Contenido
+	_content = RichTextLabel.new()
+	_content.bbcode_enabled = true
+	_content.scroll_active = true
+	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_content.add_theme_color_override("default_color", Color(0.65, 0.62, 0.55))
+	_content.add_theme_font_size_override("normal_font_size", 12)
+	vbox.add_child(_content)
+
+	# Conectar señales
+	call_deferred("_connect_signals")
+
+func _connect_signals() -> void:
+	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
+	if turn_sys:
+		if turn_sys.has_signal("turno_completado"):
+			turn_sys.turno_completado.connect(_on_turno_completado)
+
+func _create_tab(text: String, active: bool) -> Button:
+	var btn: Button = Button.new()
+	btn.text = text
+	btn.flat = true
+	var color: Color = Color(0.8, 0.72, 0.5) if active else Color(0.45, 0.42, 0.38)
+	btn.add_theme_color_override("font_color", color)
+	btn.add_theme_font_size_override("font_size", 11)
+	return btn
+
+func _show_tab(current: bool) -> void:
+	_showing_current = current
+	_tab_current.add_theme_color_override("font_color",
+		Color(0.8, 0.72, 0.5) if current else Color(0.45, 0.42, 0.38))
+	_tab_history.add_theme_color_override("font_color",
+		Color(0.8, 0.72, 0.5) if not current else Color(0.45, 0.42, 0.38))
+	_refresh_content()
+
+func _on_turno_completado(_resumen: Dictionary) -> void:
+	_show_tab(true) # Cambiar a "Este Turno" automáticamente
+	_refresh_content()
+
+func _refresh_content() -> void:
+	if _content == null:
+		return
+
+	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
+	if turn_sys == null:
+		_content.text = "[color=#807a6b]Sin datos de turno.[/color]"
+		return
+
+	var eventos: Array = turn_sys.eventos_turno_actual if _showing_current else turn_sys.historial_eventos
+
+	if _event_count_label:
+		_event_count_label.text = "%d eventos" % eventos.size()
+
+	if eventos.is_empty():
+		_content.text = "[color=#807a6b]No hay eventos %s.[/color]" % ("este turno" if _showing_current else "en el historial")
+		return
+
+	var text: String = ""
+	var max_show: int = mini(eventos.size(), 50)
+
+	for i: int in max_show:
+		var ev: Dictionary = eventos[i]
+		var sev: int = int(ev.get("severity", 0))
+		var sev_color: Color = EventDefinitions.SEVERITY_COLORS.get(sev, Color.WHITE)
+		var sev_name: String = str(EventDefinitions.SEVERITY_NAMES.get(sev, "?"))
+		var cat: int = int(ev.get("category", 0))
+		var cat_name: String = str(EventDefinitions.CATEGORY_NAMES.get(cat, "?"))
+		var hex: String = sev_color.to_html(false)
+
+		text += "[color=#%s]●[/color] " % hex
+		text += "[b]%s[/b] " % str(ev.get("nombre", "?"))
+		text += "[color=#807a6b]— %s, %s[/color] " % [str(ev.get("planeta_nombre", "?")), cat_name]
+
+		if not _showing_current:
+			text += "[color=#605a4a](%s)[/color] " % str(ev.get("turno", "?"))
+
+		text += "[color=#%s][%s][/color]" % [hex, sev_name]
+		text += "\n"
+
+		# Descripción en línea siguiente
+		text += "  [color=#605a4a]%s[/color]\n" % str(ev.get("descripcion", ""))
+
+	_content.text = text

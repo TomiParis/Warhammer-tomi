@@ -59,14 +59,28 @@ func _ready() -> void:
 	_target_zoom = ZOOM_GALAXY
 	camera.position = Vector2.ZERO
 
+	# Registrar galaxia en el singleton GameData
+	var gd_node: Node = get_node_or_null("/root/GameData")
+	if gd_node and gd_node.has_method("set_galaxy"):
+		gd_node.set_galaxy(galaxy)
+
 	# Pasar datos al renderer
 	renderer.setup(galaxy, data_provider, self)
 
 	# Inicializar UI
 	_setup_ui()
 
+	# Conectar señales del sistema de turnos
+	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
+	if turn_sys and turn_sys.has_signal("turno_completado"):
+		turn_sys.turno_completado.connect(_on_turno_completado)
+
 	# Informar al renderer del estado inicial
 	renderer.set_state(MapState.GALAXY, "", "")
+
+func _on_turno_completado(_resumen: Dictionary) -> void:
+	# Redibujar el mapa para reflejar cambios de stats/amenazas
+	renderer.queue_redraw()
 
 func _setup_ui() -> void:
 	# Inicializar componentes UI

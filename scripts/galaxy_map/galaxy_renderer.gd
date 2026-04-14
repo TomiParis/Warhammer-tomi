@@ -506,6 +506,12 @@ func _draw_planet(planet: Dictionary) -> void:
 		draw_circle(pos, radius + 6.0, Color(C_SELECTED.r, C_SELECTED.g, C_SELECTED.b, 0.3))
 		draw_circle(pos, radius + 3.0, C_SELECTED)
 
+	# Indicador de amenaza activa (parpadeo rojo sutil)
+	var amenaza = planet.get("amenaza_actual")
+	if amenaza != null and str(amenaza) != "":
+		var pulse: float = 0.3 + 0.15 * sin(float(Time.get_ticks_msec()) * 0.003 + float(pid))
+		draw_circle(pos, radius + 5.0, Color(0.8, 0.15, 0.1, pulse * 0.4))
+
 	# Glow sutil
 	draw_circle(pos, radius + 2.0, Color(color.r, color.g, color.b, 0.15))
 

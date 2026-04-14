@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 SceneManager="*uid://j20v4cg7v8m1"
 Signal_Debugger="*uid://bq1sw7qb4y3y7"
 GameData="*res://scripts/autoloads/game_data.gd"
+TurnSystem="*res://scripts/systems/turn_system.gd"
 
 [display]
 

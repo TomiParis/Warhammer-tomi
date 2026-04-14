@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/galaxy_map/galaxy_map.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/galaxy_map/galaxy_renderer.gd" id="2"]
@@ -9,6 +9,8 @@
 [ext_resource type="Script" path="res://scripts/galaxy_map/search_panel.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/galaxy_map/filter_panel.gd" id="8"]
 [ext_resource type="Script" path="res://scripts/galaxy_map/minimap.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/ui/turn_panel.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/ui/event_log.gd" id="11"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_star"]
 shader = ExtResource("3")
@@ -93,3 +95,20 @@ offset_top = -170.0
 offset_right = 170.0
 offset_bottom = -10.0
 script = ExtResource("9")
+
+[node name="TurnPanel" type="PanelContainer" parent="UILayer"]
+offset_left = 710.0
+offset_top = 5.0
+offset_right = 1210.0
+offset_bottom = 80.0
+script = ExtResource("10")
+
+[node name="EventLog" type="PanelContainer" parent="UILayer"]
+anchors_preset = 7
+anchor_left = 0.15
+anchor_top = 1.0
+anchor_right = 0.85
+anchor_bottom = 1.0
+offset_top = -200.0
+offset_bottom = -5.0
+script = ExtResource("11")
