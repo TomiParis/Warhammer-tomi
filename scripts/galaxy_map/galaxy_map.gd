@@ -112,6 +112,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _is_transitioning:
 		return
 
+	# --- Ignorar input si el mouse está sobre un panel de UI ---
+	if event is InputEventMouseButton or event is InputEventMouseMotion:
+		if _is_mouse_over_ui():
+			return
+
 	# --- ZOOM con scroll ---
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event
@@ -148,8 +153,28 @@ func _unhandled_input(event: InputEvent) -> void:
 			camera.position += delta_pan
 			renderer.queue_redraw()
 		else:
-			# Hover para tooltip
 			_handle_hover(mm.position)
+
+func _is_mouse_over_ui() -> bool:
+	# Verificar si el mouse está sobre algún panel de UI visible
+	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
+	var ui_panels: Array = [info_panel, filter_panel, search_panel]
+
+	# Agregar TurnPanel y EventLog si existen
+	var turn_panel: Control = ui_layer.get_node_or_null("TurnPanel")
+	if turn_panel:
+		ui_panels.append(turn_panel)
+	var event_log: Control = ui_layer.get_node_or_null("EventLog")
+	if event_log:
+		ui_panels.append(event_log)
+
+	for panel in ui_panels:
+		if panel == null or not panel is Control:
+			continue
+		var ctrl: Control = panel as Control
+		if ctrl.visible and ctrl.get_global_rect().has_point(mouse_pos):
+			return true
+	return false
 
 	# --- ATAJOS ---
 	if event is InputEventKey:
