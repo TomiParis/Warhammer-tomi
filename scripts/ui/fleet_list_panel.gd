@@ -139,6 +139,37 @@ func _refresh() -> void:
 			else:
 				t += " [color=#807a6b]→ %s (%d turnos)[/color]\n" % [str(ft["nombre"]), turnos]
 
+	# === FLOTAS MECHANICUS ===
+	var mech_fleets: Array = fl_data.get("mechanicus_fleets", [])
+	if not mech_fleets.is_empty():
+		t += "\n[color=#7a3a2a][b]MECHANICUS (%d)[/b][/color]\n" % mech_fleets.size()
+		for mf: Dictionary in mech_fleets:
+			var mf_estado: String = str(mf.get("estado", ""))
+			t += " [color=#7a4a3a]⚙[/color] %s\n" % str(mf["nombre"]).replace("Explorator Fleet ", "")
+			t += "   [color=#605a4a]%s[/color]\n" % mf_estado
+
+	# === FLOTAS ROGUE TRADER ===
+	var rt_fleets: Array = fl_data.get("rogue_trader_fleets", [])
+	if not rt_fleets.is_empty():
+		t += "\n[color=#6a4a7a][b]ROGUE TRADERS (%d)[/b][/color]\n" % rt_fleets.size()
+		for rt: Dictionary in rt_fleets:
+			t += " [color=#7a5a8a]☸[/color] %s\n" % str(rt["nombre"]).replace("Flota ", "")
+			t += "   [color=#605a4a]%d naves • %s[/color]\n" % [int(rt["naves"]), str(rt["estado"])]
+
+	# === FLOTAS ENEMIGAS ===
+	var enemy_fleets: Array = fl_data.get("enemy_fleets", [])
+	var active_enemies: int = 0
+	for ef: Dictionary in enemy_fleets:
+		if not bool(ef.get("derrotada", false)):
+			active_enemies += 1
+	if active_enemies > 0:
+		t += "\n[color=#8c3a3a][b]⚠ ENEMIGAS (%d)[/b][/color]\n" % active_enemies
+		for ef: Dictionary in enemy_fleets:
+			if bool(ef.get("derrotada", false)):
+				continue
+			t += " [color=#8c4a4a]✦[/color] [color=#cc6a6a]%s[/color]\n" % str(ef["nombre"])
+			t += "   [color=#605a4a]Poder: %d • %s[/color]\n" % [int(ef["poder"]), str(ef["sector"])]
+
 	# === FLOTAS ASTARTES ===
 	var chapters: Array = gd_node.chapters
 	var astartes_fleets: int = 0
@@ -147,7 +178,7 @@ func _refresh() -> void:
 		if int(flota.get("battle_barges", 0)) > 0:
 			astartes_fleets += 1
 	if astartes_fleets > 0:
-		t += "\n[color=#5a7a9a][b]FLOTAS ASTARTES (%d)[/b][/color]\n" % astartes_fleets
+		t += "\n[color=#5a7a9a][b]ASTARTES (%d)[/b][/color]\n" % astartes_fleets
 		for ch: Dictionary in chapters:
 			var flota: Dictionary = ch.get("flota", {})
 			var bb: int = int(flota.get("battle_barges", 0))
@@ -155,8 +186,14 @@ func _refresh() -> void:
 			if bb > 0:
 				var col: Color = ch.get("color_primario", Color.WHITE)
 				var hex: String = col.to_html(false)
-				t += " [color=#%s]●[/color] [color=#8aaccc]%s[/color]\n" % [hex, str(ch["nombre"])]
+				t += " [color=#%s]●[/color] %s\n" % [hex, str(ch["nombre"])]
 				t += "   [color=#605a4a]%d BB, %d SC[/color]\n" % [bb, sc]
+
+	# === NAVEGANTES ===
+	var nav_avail: int = int(fl_data.get("navigators_available", 0))
+	var nav_total: int = int(fl_data.get("navigators_total", 0))
+	t += "\n[color=#807a6b][b]NAVEGANTES[/b][/color]\n"
+	t += " [color=#c8c0b0]%d/%d disponibles[/color]\n" % [nav_avail, nav_total]
 
 	_content.text = t
 

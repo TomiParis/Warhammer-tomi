@@ -240,7 +240,26 @@ func _build_resumen(resumen: Dictionary) -> String:
 	if fl_lost > 0:
 		t += " [color=#8c5a5a]%d perdidos en el Warp[/color]\n" % fl_lost
 	if fl_cut > 0:
-		t += " [color=#c09a40]%d rutas inestables (<20)[/color]\n" % fl_cut
+		t += " [color=#c09a40]%d rutas inestables[/color]\n" % fl_cut
+	var fl_enemies: int = int(fleet.get("flotas_enemigas_nuevas", 0))
+	var fl_combats: int = int(fleet.get("combates_navales", 0))
+	var fl_convoys_att: int = int(fleet.get("convoys_atacados", 0))
+	if fl_enemies > 0:
+		t += " [color=#8c5a5a]%d flotas enemigas detectadas[/color]\n" % fl_enemies
+	if fl_combats > 0:
+		t += " [color=#c09a40]%d combates navales[/color]\n" % fl_combats
+	if fl_convoys_att > 0:
+		t += " [color=#8c5a5a]%d convoys atacados[/color]\n" % fl_convoys_att
+
+	# Alertas navales
+	var alertas: Array = fleet.get("alertas", [])
+	if not alertas.is_empty():
+		t += "\n[color=#999080]ALERTAS NAVALES[/color]\n"
+		var max_alerts: int = mini(alertas.size(), 5)
+		for a_idx: int in max_alerts:
+			t += " [color=#c09a40]⚠ %s[/color]\n" % str(alertas[a_idx])
+		if alertas.size() > 5:
+			t += " [color=#605a4a]...y %d más[/color]\n" % (alertas.size() - 5)
 
 	# Campañas y operaciones
 	t += "\n[color=#999080]OPERACIONES[/color]\n"

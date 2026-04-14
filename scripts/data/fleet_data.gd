@@ -50,6 +50,61 @@ const ROUTE_TYPES := {
 
 # Factor warp por lado de la grieta
 const WARP_FACTOR_NIHILUS: float = 1.6 # Viajes en Nihilus son 60% más lentos
-const WARP_LOST_CHANCE: float = 0.02 # 2% de perderse en el warp
+const WARP_LOST_CHANCE: float = 0.02
 const WARP_LOST_REAPPEAR_MIN: int = 5
 const WARP_LOST_REAPPEAR_MAX: int = 20
+
+# Flotas Mechanicus (Explorator)
+const MECHANICUS_FLEET_TEMPLATE := {
+	"ark_mechanicus": 1,
+	"cruisers": [2, 5],
+	"escorts": [4, 10],
+}
+
+# Flotas enemigas
+const ENEMY_FLEET_TYPES := {
+	"chaos_warband": {
+		"nombre": "Flota del Caos",
+		"origen": "eye_of_terror",
+		"poder_min": 80, "poder_max": 300,
+		"frecuencia": 0.15, # chance por turno de aparecer
+	},
+	"ork_waaagh": {
+		"nombre": "WAAAGH! Fleet",
+		"origen": "octarius",
+		"poder_min": 50, "poder_max": 200,
+		"frecuencia": 0.10,
+	},
+	"tyranid_tendril": {
+		"nombre": "Tendril Tiránido",
+		"origen": "eastern_fringe",
+		"poder_min": 150, "poder_max": 500,
+		"frecuencia": 0.03,
+	},
+	"dark_eldar_raid": {
+		"nombre": "Incursión Drukhari",
+		"origen": "webway",
+		"poder_min": 30, "poder_max": 100,
+		"frecuencia": 0.08,
+	},
+	"necron_harvest": {
+		"nombre": "Flota Cosecha Necrona",
+		"origen": "tomb_world",
+		"poder_min": 100, "poder_max": 400,
+		"frecuencia": 0.02,
+	},
+}
+
+# Nombres para flotas del Caos
+const CHAOS_FLEET_NAMES := [
+	"Flota de la Plaga", "Armada de Sangre", "Cruzada Negra",
+	"Flota del Cambio", "Armada del Placer", "Horda del Despoiler",
+	"Flota Apóstol", "Armada Renegada", "Cruzada Carmesí",
+]
+
+# Navegantes (Navis Nobilite)
+const NAVIGATOR_HOUSES := [
+	"Casa Benetek", "Casa Nostromo", "Casa Yeshar",
+	"Casa Mercator", "Casa Ortellius", "Casa Castellan",
+	"Casa Vor'cle", "Casa Domus Travellian", "Casa Aleene",
+]

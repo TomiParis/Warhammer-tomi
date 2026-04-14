@@ -11,13 +11,21 @@ func generate(galaxy: Dictionary, seed_value: int = 42) -> Dictionary:
 	var result: Dictionary = {
 		"battlefleets": [],
 		"transport_fleets": [],
+		"mechanicus_fleets": [],
+		"rogue_trader_fleets": [],
+		"enemy_fleets": [],
 		"warp_routes": [],
 		"fleets_in_transit": [],
+		"navigators_available": 0,
+		"navigators_total": 0,
 	}
 
 	_generate_battlefleets(galaxy, result)
 	_generate_transport_fleets(result)
+	_generate_mechanicus_fleets(galaxy, result)
+	_generate_rogue_trader_fleets(result)
 	_generate_warp_routes(galaxy, result)
+	_generate_navigators(result)
 
 	return result
 
@@ -155,6 +163,61 @@ func _add_route(result: Dictionary, sector_a: String, sector_b: String, tipo: St
 		"tiempo_base_turnos": rng.randi_range(2, 8),
 	})
 	_next_route_id += 1
+
+# =============================================================================
+# FLOTAS MECHANICUS
+# =============================================================================
+
+func _generate_mechanicus_fleets(galaxy: Dictionary, result: Dictionary) -> void:
+	var planetas: Array = galaxy.get("planetas", [])
+	for p: Dictionary in planetas:
+		if str(p["tipo"]) != "forge_world":
+			continue
+		var tmpl: Dictionary = FleetData.MECHANICUS_FLEET_TEMPLATE
+		result["mechanicus_fleets"].append({
+			"id": _next_fleet_id,
+			"nombre": "Explorator Fleet " + str(p["nombre"]),
+			"forge_world": str(p["nombre"]),
+			"forge_world_id": int(p["id"]),
+			"segmentum": str(p["segmentum"]),
+			"ark_mechanicus": int(tmpl["ark_mechanicus"]),
+			"cruisers": rng.randi_range(int(tmpl["cruisers"][0]), int(tmpl["cruisers"][1])),
+			"escorts": rng.randi_range(int(tmpl["escorts"][0]), int(tmpl["escorts"][1])),
+			"estado": "exploración" if rng.randf() < 0.3 else "estacionada",
+		})
+		_next_fleet_id += 1
+
+# =============================================================================
+# FLOTAS ROGUE TRADER
+# =============================================================================
+
+func _generate_rogue_trader_fleets(result: Dictionary) -> void:
+	# Leer dinastías del GameData
+	var gd: Node = Engine.get_main_loop().root.get_node_or_null("GameData")
+	if gd == null:
+		return
+	var traders: Array = gd.rogue_traders
+	for rt: Dictionary in traders:
+		var naves: int = int(rt.get("flota_naves", rng.randi_range(3, 12)))
+		result["rogue_trader_fleets"].append({
+			"id": _next_fleet_id,
+			"nombre": "Flota " + str(rt["nombre"]),
+			"dinastia": str(rt["nombre"]),
+			"naves": naves,
+			"estado": "comercio" if rng.randf() < 0.5 else "exploración",
+			"segmentum": "pacificus" if rng.randf() < 0.6 else "ultima",
+		})
+		_next_fleet_id += 1
+
+# =============================================================================
+# NAVEGANTES
+# =============================================================================
+
+func _generate_navigators(result: Dictionary) -> void:
+	# Pool global de Navegantes disponibles para contratación
+	var total: int = rng.randi_range(80, 150)
+	result["navigators_total"] = total
+	result["navigators_available"] = total # Todos disponibles al inicio
 
 func _roman(n: int) -> String:
 	match n:

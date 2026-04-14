@@ -12,6 +12,10 @@ func process(fleet_data: Dictionary, planetas: Array, turno: int) -> Dictionary:
 		"en_transito": 0,
 		"perdidos_warp": 0,
 		"rutas_cortadas": 0,
+		"flotas_enemigas_nuevas": 0,
+		"combates_navales": 0,
+		"convoys_atacados": 0,
+		"alertas": [],
 	}
 
 	# Procesar flotas en tránsito
@@ -57,7 +61,144 @@ func process(fleet_data: Dictionary, planetas: Array, turno: int) -> Dictionary:
 				if str(route["sector_a"]) == bf_sector or str(route["sector_b"]) == bf_sector:
 					route["peligrosidad_piratas"] = maxi(int(route["peligrosidad_piratas"]) - 1, 0)
 
+	# Generar flotas enemigas (basado en frecuencia por tipo)
+	_spawn_enemy_fleets(fleet_data, planetas, turno, resumen)
+
+	# Combate naval: flotas enemigas vs Battlefleets en patrulla
+	_process_naval_combat(fleet_data, resumen)
+
+	# Ataques a convoys en rutas con alta piratería
+	_process_convoy_attacks(fleet_data, resumen)
+
+	# Alertas de rutas cortadas
+	for route: Dictionary in routes:
+		if int(route["estabilidad"]) < 20:
+			resumen["alertas"].append("Ruta %s ↔ %s INESTABLE (estabilidad %d)" % [
+				str(route["sector_a"]), str(route["sector_b"]), int(route["estabilidad"])])
+
 	return resumen
+
+# =============================================================================
+# FLOTAS ENEMIGAS
+# =============================================================================
+
+func _spawn_enemy_fleets(fleet_data: Dictionary, _planetas: Array, _turno: int, resumen: Dictionary) -> void:
+	var enemy_fleets: Array = fleet_data.get("enemy_fleets", [])
+
+	for type_key: String in FleetData.ENEMY_FLEET_TYPES:
+		var etype: Dictionary = FleetData.ENEMY_FLEET_TYPES[type_key]
+		var freq: float = float(etype["frecuencia"])
+
+		if rng.randf() < freq:
+			var poder: int = rng.randi_range(int(etype["poder_min"]), int(etype["poder_max"]))
+			var nombre: String = str(etype["nombre"])
+			if type_key == "chaos_warband":
+				nombre = FleetData.CHAOS_FLEET_NAMES[rng.randi_range(0, FleetData.CHAOS_FLEET_NAMES.size() - 1)]
+
+			enemy_fleets.append({
+				"tipo": type_key,
+				"nombre": nombre,
+				"poder": poder,
+				"sector": _random_sector_for_enemy(type_key),
+				"turnos_activo": 0,
+				"derrotada": false,
+			})
+			resumen["flotas_enemigas_nuevas"] += 1
+			resumen["alertas"].append("¡%s detectada! Poder: %d" % [nombre, poder])
+
+func _random_sector_for_enemy(type_key: String) -> String:
+	match type_key:
+		"chaos_warband": return "obscurus.cadian"
+		"ork_waaagh": return "ultima.octarius"
+		"tyranid_tendril": return "ultima.eastern_fringe"
+		"dark_eldar_raid":
+			var targets: Array = ["ultima.ultramar", "tempestus.bakka", "solar.solar"]
+			return targets[rng.randi_range(0, targets.size() - 1)]
+		"necron_harvest":
+			var targets: Array = ["ultima.nephilim", "ultima.korianis"]
+			return targets[rng.randi_range(0, targets.size() - 1)]
+		_: return "solar.solar"
+
+# =============================================================================
+# COMBATE NAVAL
+# =============================================================================
+
+func _process_naval_combat(fleet_data: Dictionary, resumen: Dictionary) -> void:
+	var enemy_fleets: Array = fleet_data.get("enemy_fleets", [])
+	var battlefleets: Array = fleet_data.get("battlefleets", [])
+	var to_remove: Array = []
+
+	for ef_idx: int in enemy_fleets.size():
+		var ef: Dictionary = enemy_fleets[ef_idx]
+		if bool(ef.get("derrotada", false)):
+			to_remove.append(ef_idx)
+			continue
+
+		ef["turnos_activo"] = int(ef["turnos_activo"]) + 1
+		var ef_sector: String = str(ef["sector"])
+		var ef_poder: int = int(ef["poder"])
+
+		# Buscar Battlefleet en el mismo sector
+		for bf: Dictionary in battlefleets:
+			if str(bf["sector"]) != ef_sector:
+				continue
+			if str(bf["estado"]) != "patrulla" and str(bf["estado"]) != "desplegada":
+				continue
+
+			# Resolver combate
+			var bf_poder: int = int(bf["naves_capital"]) * 10 + int(bf["cruceros"]) * 4 + int(bf["escoltas"])
+			var bf_bonus: float = float(int(bf["experiencia"])) / 100.0 * 0.3 + float(int(bf["moral"])) / 100.0 * 0.2
+			var bf_effective: float = float(bf_poder) * (1.0 + bf_bonus)
+
+			if bf_effective > float(ef_poder) * 0.8:
+				# Victoria imperial
+				ef["derrotada"] = true
+				# Daños a la Battlefleet
+				bf["escoltas"] = maxi(int(bf["escoltas"]) - rng.randi_range(2, 8), 0)
+				bf["cruceros"] = maxi(int(bf["cruceros"]) - rng.randi_range(0, 3), 0)
+				bf["moral"] = clampi(int(bf["moral"]) + 5, 0, 100)
+				bf["experiencia"] = clampi(int(bf["experiencia"]) + 3, 0, 100)
+				resumen["alertas"].append("Victoria: %s derrotó a %s" % [str(bf["nombre"]), str(ef["nombre"])])
+			else:
+				# Derrota/empate — Battlefleet se retira a reparaciones
+				bf["estado"] = "reparaciones"
+				bf["escoltas"] = maxi(int(bf["escoltas"]) - rng.randi_range(5, 15), 0)
+				bf["cruceros"] = maxi(int(bf["cruceros"]) - rng.randi_range(2, 6), 0)
+				bf["naves_capital"] = maxi(int(bf["naves_capital"]) - rng.randi_range(0, 2), 0)
+				bf["moral"] = clampi(int(bf["moral"]) - 10, 0, 100)
+				resumen["alertas"].append("Derrota: %s se retira ante %s" % [str(bf["nombre"]), str(ef["nombre"])])
+
+			resumen["combates_navales"] += 1
+			break # Solo 1 combate por flota enemiga por turno
+
+		# Flotas enemigas activas más de 10 turnos se retiran
+		if int(ef["turnos_activo"]) > 10 and not bool(ef.get("derrotada", false)):
+			ef["derrotada"] = true
+
+	# Limpiar derrotadas (reversa)
+	for i: int in range(to_remove.size() - 1, -1, -1):
+		enemy_fleets.remove_at(to_remove[i])
+
+# =============================================================================
+# ATAQUES A CONVOYS
+# =============================================================================
+
+func _process_convoy_attacks(fleet_data: Dictionary, resumen: Dictionary) -> void:
+	var in_transit: Array = fleet_data.get("fleets_in_transit", [])
+	var routes: Array = fleet_data.get("warp_routes", [])
+
+	for ft: Dictionary in in_transit:
+		# Chance de ataque basada en piratería de la ruta
+		var max_piracy: int = 0
+		for route: Dictionary in routes:
+			if int(route["peligrosidad_piratas"]) > max_piracy:
+				max_piracy = int(route["peligrosidad_piratas"])
+
+		if max_piracy > 30 and rng.randf() < float(max_piracy) / 500.0:
+			# Convoy atacado — se retrasa
+			ft["turnos_restantes"] = int(ft["turnos_restantes"]) + rng.randi_range(1, 3)
+			resumen["convoys_atacados"] += 1
+			resumen["alertas"].append("Convoy %s atacado por piratas — retrasado" % str(ft["nombre"]))
 
 # =============================================================================
 # VIAJE WARP
