@@ -54,6 +54,17 @@ func _ready() -> void:
 	_content.meta_clicked.connect(_on_action)
 	vbox.add_child(_content)
 
+	# Conectar al turno para refresh automático
+	call_deferred("_connect_turn")
+
+func _connect_turn() -> void:
+	var ts: Node = get_node_or_null("/root/TurnSystem")
+	if ts and ts.has_signal("turno_completado"):
+		ts.turno_completado.connect(func(_r: Dictionary) -> void:
+			if visible and not _current_campaign.is_empty():
+				show_campaign(_current_campaign, _current_units)
+		)
+
 func show_campaign(camp: Dictionary, units: Array) -> void:
 	if _content == null:
 		return
