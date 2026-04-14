@@ -21,14 +21,13 @@ func _ready() -> void:
 	style.content_margin_bottom = 6.0
 	add_theme_stylebox_override("panel", style)
 
-	# Posición: abajo, al lado del event log (horizontal)
+	# Posición: abajo-izquierda, al lado izquierdo del event log
 	anchor_left = 0.0
-	anchor_right = 1.0
 	anchor_top = 1.0
 	anchor_bottom = 1.0
 	offset_left = 5.0
-	offset_right = -440.0 # No tapar minimap/turno
-	offset_top = -280.0
+	offset_right = 500.0
+	offset_top = -200.0
 	offset_bottom = -5.0
 
 	var vbox: VBoxContainer = VBoxContainer.new()
@@ -50,7 +49,7 @@ func _ready() -> void:
 	_content.scroll_active = true
 	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content.add_theme_color_override("default_color", Color(0.72, 0.70, 0.63))
-	_content.add_theme_font_size_override("normal_font_size", 12)
+	_content.add_theme_font_size_override("normal_font_size", 10)
 	_content.meta_clicked.connect(_on_action)
 	vbox.add_child(_content)
 
@@ -83,105 +82,67 @@ func _build_text(c: Dictionary, units: Array) -> String:
 	var enem_total: int = int(c["fuerzas_enemigas"])
 	var duracion: int = int(c["duracion_turnos"])
 
-	# Nombre y tipo
-	t += "[color=#d9c05a][b]%s[/b][/color]\n" % str(c["nombre"])
-	t += "[color=#807a6b]%s • Turno %d • %s[/color]\n" % [
-		str(c["tipo"]).replace("_", " ").capitalize(),
-		duracion, str(c["fase"]).replace("_", " ").capitalize()]
-	t += "[color=#807a6b]Enemigo: %s[/color]\n" % str(c["enemigo_tipo"]).capitalize()
-	t += "[color=#807a6b]Comandante: %s (Liderazgo %d)[/color]\n" % [
-		str(c["comandante"]), int(c["comandante_liderazgo"])]
+	# Encabezado compacto
+	t += "[color=#d9c05a][b]%s[/b][/color] " % str(c["nombre"])
+	t += "[color=#807a6b]vs %s • T%d • %s[/color]\n" % [
+		str(c["enemigo_tipo"]).capitalize(), duracion,
+		str(c["comandante"]).replace("General ", "").replace("Coronel ", "")]
 
-	# === MAPA DEL FRENTE (barra visual) ===
-	t += "\n[color=#999080]LÍNEA DEL FRENTE[/color]\n"
-	var bar_total: int = 20
-	var bar_imp: int = floori(float(frente) / 100.0 * float(bar_total))
-	var bar_enem: int = bar_total - bar_imp
-	var frente_col: String = "6b8c5a" if frente >= 60 else ("c09a40" if frente >= 30 else "8c5a5a")
-	t += " [color=#8c4a4a]%s[/color][color=#%s]|[/color][color=#4a6a8c]%s[/color] %d%%\n" % [
-		"█".repeat(bar_enem), frente_col, "█".repeat(bar_imp), frente]
-	t += " [color=#8c4a4a]◄ ENEMIGO[/color]          [color=#4a6a8c]IMPERIAL ►[/color]\n"
+	# Frente (barra horizontal)
+	var bar_imp: int = floori(float(frente) / 100.0 * 20.0)
+	var bar_enem: int = 20 - bar_imp
+	var fc: String = "6b8c5a" if frente >= 60 else ("c09a40" if frente >= 30 else "8c5a5a")
+	t += "[color=#8c4a4a]%s[/color][color=#%s]|[/color][color=#4a6a8c]%s[/color] [color=#%s]%d%%[/color]  " % [
+		"█".repeat(bar_enem), fc, "█".repeat(bar_imp), fc, frente]
+	t += "Moral: %s  Supply: %s\n" % [_bar(moral, 100), _bar(supply, 16)]
 
-	# Regiones del frente
-	var regions: Array = MilitaryData.FRONT_REGIONS
-	var controlled: int = floori(float(frente) / 100.0 * float(regions.size()))
-	t += " "
-	for r_idx: int in regions.size():
-		var r_col: String = "4a6a8c" if r_idx < controlled else "8c4a4a"
-		t += "[color=#%s]%s[/color] " % [r_col, str(regions[r_idx]).substr(0, 3)]
-	t += "\n"
+	# Fuerzas en línea
+	t += "[color=#4a6a8c]Imp: %s[/color] vs [color=#8c4a4a]Enem: %s[/color] • " % [_fmt(imp_total), _fmt(enem_total)]
+	t += "[color=#605a4a]Bajas: %s/%s[/color]\n" % [_fmt(int(c["bajas_imperiales"])), _fmt(int(c["bajas_enemigas"]))]
 
-	# === FUERZAS ===
-	t += "\n[color=#999080]FUERZAS[/color]\n"
-	t += " Imperial: [color=#4a6a8c]%s[/color]\n" % _fmt(imp_total)
-	t += " Enemigo:  [color=#8c4a4a]%s[/color]\n" % _fmt(enem_total)
-	t += " Bajas Imp: [color=#807a6b]%s[/color] • Enem: [color=#807a6b]%s[/color]\n" % [
-		_fmt(int(c["bajas_imperiales"])), _fmt(int(c["bajas_enemigas"]))]
-
-	# === BARRAS ===
-	t += "\n[color=#999080]ESTADO[/color]\n"
-	t += " Moral:       %s\n" % _bar(moral, 100)
-	t += " Suministros: %s\n" % _bar(supply, 16)
-
-	# === ESTRATEGIA ===
+	# Estrategia + acciones en línea
 	var strat: String = str(c["estrategia"])
-	var strat_name: String = strat
-	if MilitaryData.STRATEGIES.has(strat):
-		strat_name = str(MilitaryData.STRATEGIES[strat]["nombre"])
-	t += " Estrategia:  [color=#d9c05a]%s[/color]\n" % strat_name
-
-	# === UNIDADES ===
-	var imp_units: Array = c.get("fuerzas_imperiales", [])
-	if not imp_units.is_empty():
-		t += "\n[color=#999080]UNIDADES (%d)[/color]\n" % imp_units.size()
-		for uid: int in imp_units:
-			for u: Dictionary in units:
-				if int(u["id"]) == uid:
-					var u_fuerza: int = int(u["fuerza"])
-					var u_max: int = int(u["fuerza_max"])
-					var u_pct: int = floori(float(u_fuerza) / float(u_max) * 100.0) if u_max > 0 else 0
-					var u_col: String = "6b8c5a" if u_pct > 60 else ("c09a40" if u_pct > 30 else "8c5a5a")
-					t += " [color=#%s]●[/color] %s\n" % [u_col, str(u["nombre"])]
-					t += "   [color=#605a4a]%s %s • %d/%d • %s[/color]\n" % [
-						str(u["tipo_arma"]).capitalize(),
-						str(u["experiencia"]),
-						u_fuerza, u_max,
-						str(u["comandante"])]
-					break
-
-	# === ACCIONES ===
-	t += "\n[color=#999080]ACCIONES[/color]\n"
-
-	# Cambiar estrategia
-	t += " [color=#807a6b]Cambiar estrategia:[/color]\n"
+	var strat_name: String = str(MilitaryData.STRATEGIES.get(strat, {}).get("nombre", strat))
+	t += "[color=#d9c05a]%s[/color] " % strat_name
 	for strat_key: String in MilitaryData.STRATEGIES:
-		var s_data: Dictionary = MilitaryData.STRATEGIES[strat_key]
-		var is_current: bool = strat_key == str(c["estrategia"])
-		if is_current:
-			t += "  [color=#d9c05a]► %s[/color]\n" % str(s_data["nombre"])
-		else:
-			t += "  [url=strat_%s][color=#5a7a9a]  %s[/color][/url]\n" % [strat_key, str(s_data["nombre"])]
+		if strat_key != strat:
+			var sn: String = str(MilitaryData.STRATEGIES[strat_key]["nombre"])
+			t += "[url=strat_%s][color=#5a7a9a]%s[/color][/url] " % [strat_key, sn.substr(0, 4)]
 
-	# Enviar refuerzos (listar regimientos disponibles cerca)
-	var available_reinforcements: int = 0
+	# Acciones
+	var avail_rf: int = 0
 	for u: Dictionary in units:
 		if str(u["estado"]) == "guarnicion" and int(u.get("campana_id", -1)) < 0:
-			available_reinforcements += 1
-	t += "\n [url=send_reinforcements][color=#5a7a9a]⚔ Enviar refuerzos (%d disponibles)[/color][/url]\n" % available_reinforcements
+			avail_rf += 1
+	t += "\n[url=send_reinforcements][color=#5a7a9a]⚔ Refuerzos(%d)[/color][/url] " % avail_rf
+	t += "[url=assign_supply][color=#5a7a9a]📦 Supply[/color][/url] "
+	t += "[url=retreat][color=#8c5a5a]← Retirada[/color][/url]\n"
 
-	# Asignar suministros
-	t += " [url=assign_supply][color=#5a7a9a]📦 Asignar ruta de suministro[/color][/url]\n"
+	# Unidades (compacto, 1 línea cada una)
+	var imp_units: Array = c.get("fuerzas_imperiales", [])
+	if not imp_units.is_empty():
+		t += "[color=#999080]Unidades (%d):[/color] " % imp_units.size()
+		var shown_u: int = 0
+		for uid: int in imp_units:
+			if shown_u >= 4:
+				t += "[color=#605a4a]+%d más[/color]" % (imp_units.size() - 4)
+				break
+			for u: Dictionary in units:
+				if int(u["id"]) == uid:
+					var uf: int = int(u["fuerza"])
+					var um: int = int(u["fuerza_max"])
+					var uc: String = "6b8c5a" if uf > um / 2 else "8c5a5a"
+					t += "[color=#%s]●[/color]%s(%d) " % [uc, str(u["nombre"]).substr(0, 15), uf]
+					shown_u += 1
+					break
+		t += "\n"
 
-	# Retirada
-	t += " [url=retreat][color=#8c5a5a]← Ordenar retirada[/color][/url]\n"
-
-	# === LOG NARRATIVO ===
+	# Log (últimos 3, compacto)
 	var log: Array = c.get("log", [])
 	if not log.is_empty():
-		t += "\n[color=#999080]REPORTES DE BATALLA[/color]\n"
-		var max_log: int = mini(log.size(), 8)
+		var max_log: int = mini(log.size(), 3)
 		for l_idx: int in range(log.size() - 1, maxi(log.size() - max_log - 1, -1), -1):
-			t += " [color=#605a4a]%s[/color]\n" % str(log[l_idx])
+			t += "[color=#504a3a]%s[/color]\n" % str(log[l_idx])
 
 	return t
 
