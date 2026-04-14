@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://c4ydg0taua0ly"]
+[gd_scene load_steps=15 format=3 uid="uid://c4ydg0taua0ly"]
 
 [ext_resource type="Script" uid="uid://dx1fytsm0yj38" path="res://scripts/galaxy_map/galaxy_map.gd" id="1"]
 [ext_resource type="Script" uid="uid://camgyulsx4ksd" path="res://scripts/galaxy_map/galaxy_renderer.gd" id="2"]
@@ -146,14 +146,6 @@ offset_top = 5.0
 offset_right = -5.0
 offset_bottom = -220.0
 script = ExtResource("12")
-
-[node name="FleetPanel" type="PanelContainer" parent="UILayer" unique_id=904091218]
-visible = false
-offset_left = 170.0
-offset_top = 50.0
-offset_right = 340.0
-offset_bottom = 250.0
-script = ExtResource("13")
 
 [node name="FleetListPanel" type="PanelContainer" parent="UILayer" unique_id=1713968794]
 offset_left = 5.0

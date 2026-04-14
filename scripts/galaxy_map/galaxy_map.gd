@@ -25,7 +25,6 @@ const PAN_SPEED: float = 1.0
 @onready var filter_panel: PanelContainer = $UILayer/FilterPanel
 @onready var minimap_container: Control = $UILayer/Minimap
 @onready var chapter_panel: PanelContainer = $UILayer/ChapterPanel
-@onready var fleet_panel: PanelContainer = $UILayer/FleetPanel
 @onready var fleet_list_panel: PanelContainer = $UILayer/FleetListPanel
 
 # === DATOS ===
@@ -196,7 +195,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _is_mouse_over_ui() -> bool:
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
-	var ui_panels: Array = [info_panel, filter_panel, search_panel, chapter_panel, fleet_panel, fleet_list_panel]
+	var ui_panels: Array = [info_panel, filter_panel, search_panel, chapter_panel, fleet_list_panel]
 	var turn_p: Control = ui_layer.get_node_or_null("TurnPanel")
 	if turn_p:
 		ui_panels.append(turn_p)
@@ -347,28 +346,20 @@ func _find_battlefleet_at(world_pos: Vector2, threshold: float) -> Dictionary:
 			return bf
 	return {}
 
-func _show_fleet(bf: Dictionary) -> void:
-	if fleet_panel and fleet_panel.has_method("show_battlefleet"):
-		fleet_panel.show_battlefleet(bf)
-		fleet_panel.visible = true
-		if info_panel:
-			info_panel.visible = false
-		if chapter_panel:
-			chapter_panel.visible = false
+func _show_fleet(_bf: Dictionary) -> void:
+	# El fleet_list_panel maneja todo ahora — expandirlo si está minimizado
+	if fleet_list_panel and fleet_list_panel.has_method("_on_toggle"):
+		if fleet_list_panel._minimized:
+			fleet_list_panel._on_toggle()
 
 func _hide_fleet() -> void:
-	if fleet_panel:
-		fleet_panel.visible = false
+	pass
 
 func _show_fleet_transports() -> void:
-	var gd_node: Node = get_node_or_null("/root/GameData")
-	if gd_node == null:
-		return
-	if fleet_panel and fleet_panel.has_method("show_transport_summary"):
-		fleet_panel.show_transport_summary(gd_node.fleet_data)
-		fleet_panel.visible = true
-		if info_panel:
-			info_panel.visible = false
+	if fleet_list_panel and fleet_list_panel.has_method("_switch_tab"):
+		if fleet_list_panel._minimized:
+			fleet_list_panel._on_toggle()
+		fleet_list_panel._switch_tab("transport")
 
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
 	var viewport_size: Vector2 = get_viewport_rect().size
