@@ -28,6 +28,7 @@ var intel: IntelSystem = IntelSystem.new()
 var movement: MovementSystem = MovementSystem.new()
 var chapter_sys: ChapterSystem = ChapterSystem.new()
 var governance: GovernanceSystem = GovernanceSystem.new()
+var fleet_sys: FleetSystem = FleetSystem.new()
 
 # Historial de eventos
 var eventos_turno_actual: Array = []
@@ -105,7 +106,11 @@ func ejecutar_turno() -> void:
 	var faction_rels: Dictionary = gd_node.faction_relations if gd_node else {}
 	var resumen_gov: Dictionary = governance.process(planetas, faction_rels, turno_actual)
 
-	# Fase E: Capítulos de Space Marines
+	# Fase E: Flotas y navegación warp
+	var fl_data: Dictionary = gd_node.fleet_data if gd_node else {}
+	var resumen_fleet: Dictionary = fleet_sys.process(fl_data, planetas, turno_actual)
+
+	# Fase F: Capítulos de Space Marines
 	var ch_list: Array = gd_node.chapters if gd_node else []
 	var resumen_chapters: Dictionary = chapter_sys.process(ch_list, planetas, turno_actual)
 
@@ -126,6 +131,7 @@ func ejecutar_turno() -> void:
 		"eventos_count": eventos_turno_actual.size(),
 		"eventos": eventos_turno_actual,
 		"gobernanza": resumen_gov,
+		"flotas": resumen_fleet,
 		"chapters": resumen_chapters,
 		"campanas": resumen_camp,
 		"inteligencia": resumen_intel,

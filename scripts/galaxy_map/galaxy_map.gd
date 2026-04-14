@@ -83,6 +83,15 @@ func _ready() -> void:
 		gov_data["lord_sectors"].size(), gov_data["knight_houses"].size(), gov_data["rogue_traders"].size()
 	])
 
+	# Generar flotas y rutas warp
+	var fl_gen: FleetGenerator = FleetGenerator.new()
+	var fl_data: Dictionary = fl_gen.generate(galaxy, 42)
+	if gd_node and gd_node.has_method("set_fleet_data"):
+		gd_node.set_fleet_data(fl_data)
+	print(">>> Flotas: %d Battlefleets, %d Transportes, %d Rutas Warp" % [
+		fl_data["battlefleets"].size(), fl_data["transport_fleets"].size(), fl_data["warp_routes"].size()
+	])
+
 	# Pasar datos al renderer
 	renderer.setup(galaxy, data_provider, self)
 

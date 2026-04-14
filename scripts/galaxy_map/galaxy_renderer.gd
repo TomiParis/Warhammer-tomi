@@ -395,14 +395,8 @@ func _draw_segmentum_layer() -> void:
 		var lado_color: Color = Color(0.4, 0.5, 0.35, 0.35) if lado == "sanctus" else Color(0.5, 0.3, 0.25, 0.35)
 		_draw_label(pos + Vector2(0.0, 60.0), lado_label, lado_color, 22)
 
-	# Rutas warp entre sectores (grosor visible)
-	var sec_keys: Array = sectores.keys()
-	for i: int in sec_keys.size():
-		for j: int in range(i + 1, sec_keys.size()):
-			var key_a: String = _seg_key + "." + str(sec_keys[i])
-			var key_b: String = _seg_key + "." + str(sec_keys[j])
-			if _dp.sector_positions.has(key_a) and _dp.sector_positions.has(key_b):
-				_draw_warp_route_thick(_dp.sector_positions[key_a], _dp.sector_positions[key_b], 3.0)
+	# Rutas warp reales con color por estabilidad
+	_draw_warp_routes_for_segmentum()
 
 	# Título del segmentum
 	_draw_label(_dp.segmentum_centers[_seg_key] + Vector2(0.0, -900.0),
@@ -529,6 +523,65 @@ func _draw_planet(planet: Dictionary) -> void:
 	if planet.get("es_canonico", false):
 		var nombre: String = str(planet["nombre"])
 		_draw_label(pos + Vector2(radius + 5.0, -3.0), nombre, Color(0.8, 0.78, 0.7, 0.9), 8)
+
+# =============================================================================
+# RUTAS WARP REALES
+# =============================================================================
+
+func _draw_warp_routes_for_segmentum() -> void:
+	var gd_node = _map.get_node_or_null("/root/GameData") if _map else null
+	if gd_node == null:
+		return
+	var fl_data: Dictionary = gd_node.fleet_data
+	if fl_data.is_empty():
+		return
+
+	var routes: Array = fl_data.get("warp_routes", [])
+	for r_idx: int in routes.size():
+		var route: Dictionary = routes[r_idx]
+		var sa: String = str(route["sector_a"])
+		var sb: String = str(route["sector_b"])
+
+		# Solo dibujar rutas que involucren el segmentum actual
+		if _seg_key != "" and not sa.begins_with(_seg_key) and not sb.begins_with(_seg_key):
+			continue
+
+		if not _dp.sector_positions.has(sa) or not _dp.sector_positions.has(sb):
+			continue
+
+		var pos_a: Vector2 = _dp.sector_positions[sa]
+		var pos_b: Vector2 = _dp.sector_positions[sb]
+		var estab: int = int(route["estabilidad"])
+
+		# Color por estabilidad: verde (>60), amarillo (30-60), rojo (<30)
+		var route_color: Color
+		if estab >= 60:
+			route_color = Color(0.3, 0.55, 0.35, 0.25)
+		elif estab >= 30:
+			route_color = Color(0.6, 0.5, 0.2, 0.2)
+		else:
+			route_color = Color(0.6, 0.2, 0.15, 0.2)
+
+		# Grosor por tipo
+		var width: float = 3.0
+		if str(route["tipo"]) == "principal":
+			width = 4.0
+		elif str(route["tipo"]) == "menor":
+			width = 1.5
+
+		_draw_warp_route_colored(pos_a, pos_b, route_color, width)
+
+func _draw_warp_route_colored(from: Vector2, to: Vector2, color: Color, width: float) -> void:
+	var mid: Vector2 = (from + to) / 2.0
+	var perp: Vector2 = (to - from).rotated(PI / 2.0).normalized()
+	var offset_dist: float = from.distance_to(to) * 0.12
+	var control: Vector2 = mid + perp * offset_dist
+	var prev: Vector2 = from
+	for i: int in range(1, 11):
+		var t: float = float(i) / 10.0
+		var p: Vector2 = from.lerp(control, t).lerp(control.lerp(to, t), t)
+		draw_line(prev, p, color, width, true)
+		prev = p
 
 # =============================================================================
 # CAPÍTULOS DE SPACE MARINES

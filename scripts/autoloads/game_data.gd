@@ -11,10 +11,13 @@ var chapters: Array = []
 var chapters_by_id: Dictionary = {}
 
 # === GOBERNANZA ===
-var lord_sectors: Dictionary = {}     # "seg.sec" -> lord_sector dict
+var lord_sectors: Dictionary = {}
 var knight_houses: Array = []
 var rogue_traders: Array = []
-var faction_relations: Dictionary = {} # "faccion.faccion" -> 0-100
+var faction_relations: Dictionary = {}
+
+# === FLOTAS ===
+var fleet_data: Dictionary = {} # battlefleets, transport_fleets, warp_routes, fleets_in_transit
 
 # === ACCESOS RÁPIDOS (se llenan después de generar) ===
 var planets_by_id: Dictionary = {} # id -> planet dict
@@ -102,6 +105,9 @@ func set_governance(gov_data: Dictionary) -> void:
 	knight_houses = gov_data.get("knight_houses", [])
 	rogue_traders = gov_data.get("rogue_traders", [])
 	faction_relations = gov_data.get("faction_relations", {})
+
+func set_fleet_data(new_data: Dictionary) -> void:
+	fleet_data = new_data
 
 func get_chapter_at_planet(planet_id: int) -> Dictionary:
 	for ch: Dictionary in chapters:
