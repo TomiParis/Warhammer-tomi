@@ -46,7 +46,7 @@ func _ready() -> void:
 	var title: Label = Label.new()
 	title.text = "EVENTOS"
 	title.add_theme_color_override("font_color", Color(0.7, 0.65, 0.5))
-	title.add_theme_font_size_override("font_size", 11)
+	title.add_theme_font_size_override("font_size", 9)
 	tabs.add_child(title)
 
 	_tab_current = _create_tab("Turno", true)
@@ -128,7 +128,7 @@ func _create_tab(text: String, active: bool) -> Button:
 	btn.flat = true
 	var color: Color = Color(0.8, 0.72, 0.5) if active else Color(0.45, 0.42, 0.38)
 	btn.add_theme_color_override("font_color", color)
-	btn.add_theme_font_size_override("font_size", 10)
+	btn.add_theme_font_size_override("font_size", 8)
 	return btn
 
 func _connect_signals() -> void:
