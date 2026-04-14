@@ -68,6 +68,7 @@ func _ready() -> void:
 	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content.add_theme_color_override("default_color", Color(0.65, 0.62, 0.55))
 	_content.add_theme_font_size_override("normal_font_size", 12)
+	_content.meta_clicked.connect(_on_planet_clicked)
 	vbox.add_child(_content)
 
 	# Conectar señales
@@ -78,6 +79,28 @@ func _connect_signals() -> void:
 	if turn_sys:
 		if turn_sys.has_signal("turno_completado"):
 			turn_sys.turno_completado.connect(_on_turno_completado)
+
+func _on_planet_clicked(meta: Variant) -> void:
+	# meta = planeta_id como string del [url]
+	var pid: int = int(str(meta))
+	if pid <= 0:
+		return
+
+	# Buscar el planeta en GameData
+	var gd_node: Node = get_node_or_null("/root/GameData")
+	if gd_node == null:
+		return
+	var planet: Dictionary = gd_node.planets_by_id.get(pid, {})
+	if planet.is_empty():
+		return
+
+	# Buscar el GalaxyMap en el árbol para navegar
+	var galaxy_map = get_tree().get_first_node_in_group("galaxy_map")
+	if galaxy_map == null:
+		# Fallback: buscar por nombre
+		galaxy_map = get_node_or_null("/root/GalaxyMap")
+	if galaxy_map and galaxy_map.has_method("navigate_to_planet"):
+		galaxy_map.navigate_to_planet(planet)
 
 func _create_tab(text: String, active: bool) -> Button:
 	var btn: Button = Button.new()
@@ -130,9 +153,14 @@ func _refresh_content() -> void:
 		var cat_name: String = str(EventDefinitions.CATEGORY_NAMES.get(cat, "?"))
 		var hex: String = sev_color.to_html(false)
 
+		var planeta_id: String = str(ev.get("planeta_id", ""))
+		var planeta_nombre: String = str(ev.get("planeta_nombre", "?"))
+
 		text += "[color=#%s]●[/color] " % hex
 		text += "[b]%s[/b] " % str(ev.get("nombre", "?"))
-		text += "[color=#807a6b]— %s, %s[/color] " % [str(ev.get("planeta_nombre", "?")), cat_name]
+		text += "[color=#807a6b]— [/color]"
+		text += "[url=%s][color=#c9a84c]%s[/color][/url]" % [planeta_id, planeta_nombre]
+		text += "[color=#807a6b], %s[/color] " % cat_name
 
 		if not _showing_current:
 			text += "[color=#605a4a](%s)[/color] " % str(ev.get("turno", "?"))
