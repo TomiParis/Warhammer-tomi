@@ -61,13 +61,66 @@ func _build_bf_text(bf: Dictionary) -> String:
 	var cru: int = int(bf["cruceros"])
 	var esc: int = int(bf["escoltas"])
 
-	t += "[color=#d9c05a][b]%s[/b][/color]\n" % str(bf["nombre"])
-	t += "[color=#807a6b]%s[/color]\n" % str(bf["admiral"])
-	t += "[color=#%s]%s[/color] [color=#605a4a]%s[/color]\n" % [ec, estado.to_upper(), str(bf["sector"])]
-	t += "[color=#807a6b]%d cap %d cru %d esc[/color]\n" % [cap, cru, esc]
-	t += "[color=#d9c05a]%d naves[/color]\n" % (cap + cru + esc)
+	var total: int = cap + cru + esc
+	var poder: int = cap * 10 + cru * 4 + esc
+
+	# Nombre y tipo
+	t += "[color=#5a8ab0]⚓[/color] [color=#d9c05a][b]%s[/b][/color]\n" % str(bf["nombre"])
+	t += "[color=#807a6b]Armada Imperial del Segmentum[/color]\n"
+
+	# Comandante
+	t += "[color=#999080]COMANDANTE[/color]\n"
+	t += " [color=#c8c0b0]%s[/color]\n" % str(bf["admiral"])
+
+	# Estado
+	t += "[color=#999080]ESTADO[/color]\n"
+	t += " [color=#%s]%s[/color]\n" % [ec, estado.to_upper()]
+
+	# Asignación
+	t += "[color=#999080]SECTOR[/color]\n"
+	t += " [color=#c8c0b0]%s[/color]\n" % str(bf["sector"])
+
+	# Composición detallada
+	t += "[color=#999080]COMPOSICIÓN[/color]\n"
+	t += " [color=#c8c0b0]Naves Capital:[/color] %d\n" % cap
+	t += "  [color=#605a4a]Battleships, Grand Cruisers[/color]\n"
+	t += " [color=#c8c0b0]Cruceros:[/color] %d\n" % cru
+	t += "  [color=#605a4a]Cruisers, Light Cruisers[/color]\n"
+	t += " [color=#c8c0b0]Escoltas:[/color] %d\n" % esc
+	t += "  [color=#605a4a]Frigates, Destroyers[/color]\n"
+	t += " [color=#d9c05a]Total: %d naves[/color]\n" % total
+
+	# Poder de combate
+	t += "[color=#999080]PODER DE COMBATE[/color]\n"
+	var p_bar: int = clampi(floori(float(poder) / 50.0), 0, 10)
+	var p_col: String = "6b8c5a" if poder > 300 else ("c09a40" if poder > 150 else "8c5a5a")
+	t += " [color=#%s]%s[/color][color=#333]%s[/color] %d\n" % [p_col, "█".repeat(p_bar), "░".repeat(10 - p_bar), poder]
+
+	# Tripulación
+	t += "[color=#999080]TRIPULACIÓN[/color]\n"
 	t += _bar("Moral", int(bf["moral"]))
-	t += _bar("Exp", int(bf["experiencia"]))
+	t += _bar("Experiencia", int(bf["experiencia"]))
+
+	# Capacidades
+	t += "[color=#999080]CAPACIDADES[/color]\n"
+	t += " [color=#807a6b]Bombardeo Orbital:[/color] [color=#c8c0b0]%s[/color]\n" % ("Sí" if cap >= 5 else "Limitado")
+	t += " [color=#807a6b]Escolta Convoy:[/color] [color=#c8c0b0]%d escoltas disp.[/color]\n" % esc
+	t += " [color=#807a6b]Patrulla Sector:[/color] [color=#c8c0b0]%s[/color]\n" % ("Activa" if estado == "patrulla" else "Suspendida")
+	t += " [color=#807a6b]Bloqueo Naval:[/color] [color=#c8c0b0]%s[/color]\n" % ("Capaz" if cru >= 10 else "Insuficiente")
+
+	# Base
+	t += "[color=#999080]BASE PRINCIPAL[/color]\n"
+	var base_id: int = int(bf.get("base_planeta_id", -1))
+	if base_id >= 0:
+		var gd: Node = get_node_or_null("/root/GameData")
+		if gd and gd.planets_by_id.has(base_id):
+			var base_p: Dictionary = gd.planets_by_id[base_id]
+			t += " [color=#c8c0b0]%s[/color]\n" % str(base_p["nombre"])
+		else:
+			t += " [color=#605a4a]Estación Orbital[/color]\n"
+	else:
+		t += " [color=#605a4a]Sin base fija[/color]\n"
+
 	return t
 
 func _bar(label: String, value: int) -> String:
