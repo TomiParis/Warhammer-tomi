@@ -24,6 +24,7 @@ const PAN_SPEED: float = 1.0
 @onready var search_panel: PanelContainer = $UILayer/SearchPanel
 @onready var filter_panel: PanelContainer = $UILayer/FilterPanel
 @onready var minimap_container: Control = $UILayer/Minimap
+@onready var chapter_panel: PanelContainer = $UILayer/ChapterPanel
 
 # === DATOS ===
 var galaxy: Dictionary = {}
@@ -175,7 +176,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _is_mouse_over_ui() -> bool:
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
-	var ui_panels: Array = [info_panel, filter_panel, search_panel]
+	var ui_panels: Array = [info_panel, filter_panel, search_panel, chapter_panel]
 	var turn_p: Control = ui_layer.get_node_or_null("TurnPanel")
 	if turn_p:
 		ui_panels.append(turn_p)
@@ -235,13 +236,22 @@ func _handle_click(screen_pos: Vector2) -> void:
 				navigate_to_sector(sec)
 
 		MapState.SECTOR:
+			# Primero buscar si clickeó un capítulo
+			var ch: Dictionary = _find_chapter_at(world_pos, 15.0 / _current_zoom)
+			if not ch.is_empty():
+				_show_chapter(ch)
+				return
+
 			var planet: Dictionary = data_provider.find_planet_at(
 				world_pos, selected_sector, galaxy, 20.0 / _current_zoom
 			)
 			if not planet.is_empty():
 				select_planet(planet)
+				# Si el planeta tiene un capítulo, también se puede ver
+				_hide_chapter()
 			else:
 				deselect_planet()
+				_hide_chapter()
 
 func _handle_hover(screen_pos: Vector2) -> void:
 	if current_state != MapState.SECTOR:
@@ -260,6 +270,38 @@ func _handle_hover(screen_pos: Vector2) -> void:
 	elif tooltip:
 		tooltip.visible = false
 		hovered_planet = {}
+
+func _find_chapter_at(world_pos: Vector2, threshold: float) -> Dictionary:
+	var gd_node: Node = get_node_or_null("/root/GameData")
+	if gd_node == null:
+		return {}
+	var ch_list: Array = gd_node.chapters
+	var best_dist: float = threshold
+	var best_ch: Dictionary = {}
+	for ch_idx: int in ch_list.size():
+		var ch: Dictionary = ch_list[ch_idx]
+		var mundo_id: int = int(ch["mundo_natal_id"])
+		if mundo_id < 0:
+			continue
+		if not data_provider.planet_positions.has(mundo_id):
+			continue
+		var pos: Vector2 = data_provider.planet_positions[mundo_id]
+		var dist: float = world_pos.distance_to(pos)
+		if dist < best_dist:
+			best_dist = dist
+			best_ch = ch
+	return best_ch
+
+func _show_chapter(ch: Dictionary) -> void:
+	if chapter_panel and chapter_panel.has_method("show_chapter"):
+		chapter_panel.show_chapter(ch)
+		chapter_panel.visible = true
+		if info_panel:
+			info_panel.visible = false
+
+func _hide_chapter() -> void:
+	if chapter_panel:
+		chapter_panel.visible = false
 
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
 	var viewport_size: Vector2 = get_viewport_rect().size

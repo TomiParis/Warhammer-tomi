@@ -55,6 +55,7 @@ func _ready() -> void:
 	_content.scroll_active = true
 	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content.add_theme_color_override("default_color", Color(0.75, 0.72, 0.65))
+	_content.meta_clicked.connect(_on_meta_clicked)
 	vbox.add_child(_content)
 
 func show_planet(planet: Dictionary) -> void:
@@ -133,7 +134,7 @@ func _build_planet_text(p: Dictionary) -> String:
 	text += "[color=#999080]GUARNICIÓN[/color]\n"
 	text += "[color=#c8c0b0]PDF: %s efectivos[/color]\n" % _format_pop(pdf)
 	if astartes != null and str(astartes) != "":
-		text += "[color=#d9c05a]Astartes: %s[/color]\n" % str(astartes)
+		text += "[color=#d9c05a]Astartes: [url=chapter_%s]%s[/url][/color]\n" % [str(astartes), str(astartes)]
 	text += "\n"
 
 	# Info adicional
@@ -173,6 +174,21 @@ func _format_pop(pop: int) -> String:
 	elif pop >= 1_000_000: return "%.1f millones" % (float(pop) / 1_000_000.0)
 	elif pop >= 1_000: return "%d mil" % floori(float(pop) / 1000.0)
 	else: return str(pop)
+
+func _on_meta_clicked(meta: Variant) -> void:
+	var meta_str: String = str(meta)
+	if meta_str.begins_with("chapter_"):
+		var ch_name: String = meta_str.substr(8) # Quitar "chapter_"
+		var gd_node: Node = get_node_or_null("/root/GameData")
+		if gd_node == null:
+			return
+		# Buscar capítulo por nombre
+		for ch: Dictionary in gd_node.chapters:
+			if str(ch["nombre"]) == ch_name:
+				var galaxy_map = get_tree().get_first_node_in_group("galaxy_map")
+				if galaxy_map and galaxy_map.has_method("_show_chapter"):
+					galaxy_map._show_chapter(ch)
+				break
 
 func _build_planet_events(planet_id: int) -> String:
 	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
