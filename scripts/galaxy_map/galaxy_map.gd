@@ -262,8 +262,8 @@ func _handle_click(screen_pos: Vector2) -> void:
 			if not bf.is_empty():
 				_show_fleet(bf)
 				return
-			# Solo navegar si el click cae DENTRO del radio del sector
-			var sec: String = data_provider.find_sector_at_within_radius(world_pos, selected_segmentum)
+			# Buscar el sector más cercano (sin límite de radio)
+			var sec: String = data_provider.find_sector_at(world_pos, selected_segmentum)
 			if sec != "":
 				navigate_to_sector(sec)
 
