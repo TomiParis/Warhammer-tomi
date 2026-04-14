@@ -17,35 +17,32 @@ func _ready() -> void:
 	anchor_left = 0.0
 	anchor_top = 0.0
 	offset_left = 5.0
-	offset_top = 35.0
-	custom_minimum_size = Vector2(150, 0)
+	offset_top = 30.0
+	custom_minimum_size = Vector2(130, 0)
 
-	# Estilo: transparente cuando minimizado, con fondo cuando expandido
 	_update_style()
 
 	var main_vbox: VBoxContainer = VBoxContainer.new()
 	main_vbox.add_theme_constant_override("separation", 0)
 	add_child(main_vbox)
 
-	# Botón minimizar/expandir
 	_toggle_btn = Button.new()
-	_toggle_btn.text = "▼ FILTROS"
+	_toggle_btn.text = "► FILTROS"
 	_toggle_btn.flat = true
 	_toggle_btn.add_theme_color_override("font_color", Color(0.7, 0.65, 0.5))
-	_toggle_btn.add_theme_font_size_override("font_size", 11)
+	_toggle_btn.add_theme_font_size_override("font_size", 9)
 	_toggle_btn.pressed.connect(_on_toggle)
 	main_vbox.add_child(_toggle_btn)
 
-	# Scroll con contenido (colapsable)
 	_scroll = ScrollContainer.new()
-	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_scroll.custom_minimum_size = Vector2(150, 350)
+	_scroll.visible = false # Empieza MINIMIZADO
+	_scroll.custom_minimum_size = Vector2(120, 250)
 	main_vbox.add_child(_scroll)
 
 	_vbox = VBoxContainer.new()
-	_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_vbox.add_theme_constant_override("separation", 1)
 	_scroll.add_child(_vbox)
+	_minimized = true # Empieza minimizado
 
 	_build_filters()
 
@@ -77,7 +74,7 @@ func _build_filters() -> void:
 	var title: Label = Label.new()
 	title.text = "FILTROS"
 	title.add_theme_color_override("font_color", Color(0.7, 0.65, 0.5))
-	title.add_theme_font_size_override("font_size", 12)
+	title.add_theme_font_size_override("font_size", 9)
 	_vbox.add_child(title)
 
 	_add_separator()
@@ -86,7 +83,7 @@ func _build_filters() -> void:
 	var lado_label: Label = Label.new()
 	lado_label.text = "Lado de la Grieta"
 	lado_label.add_theme_color_override("font_color", Color(0.6, 0.55, 0.45))
-	lado_label.add_theme_font_size_override("font_size", 11)
+	lado_label.add_theme_font_size_override("font_size", 8)
 	_vbox.add_child(lado_label)
 
 	_add_lado_check("sanctus", "Imperium Sanctus")
@@ -98,7 +95,7 @@ func _build_filters() -> void:
 	var type_label: Label = Label.new()
 	type_label.text = "Tipo de Mundo"
 	type_label.add_theme_color_override("font_color", Color(0.6, 0.55, 0.45))
-	type_label.add_theme_font_size_override("font_size", 11)
+	type_label.add_theme_font_size_override("font_size", 8)
 	_vbox.add_child(type_label)
 
 	# Ordenar tipos por nombre
@@ -114,7 +111,7 @@ func _build_filters() -> void:
 	var ctrl_label: Label = Label.new()
 	ctrl_label.text = "Controlador"
 	ctrl_label.add_theme_color_override("font_color", Color(0.6, 0.55, 0.45))
-	ctrl_label.add_theme_font_size_override("font_size", 11)
+	ctrl_label.add_theme_font_size_override("font_size", 8)
 	_vbox.add_child(ctrl_label)
 
 	var ctrl_types: Array = ["gobernador_planetario", "adeptus_mechanicus", "ecclesiarquia",
@@ -130,8 +127,8 @@ func _add_type_check(tipo: String, label_text: String) -> void:
 	var cb: CheckBox = CheckBox.new()
 	cb.text = label_text
 	cb.button_pressed = true
-	cb.add_theme_color_override("font_color", Color(0.55, 0.52, 0.45))
-	cb.add_theme_font_size_override("font_size", 10)
+	cb.add_theme_color_override("font_color", Color(0.5, 0.48, 0.42))
+	cb.add_theme_font_size_override("font_size", 8)
 	cb.toggled.connect(func(_pressed: bool) -> void: _apply_filters())
 	_type_checks[tipo] = cb
 	_vbox.add_child(cb)
@@ -140,8 +137,8 @@ func _add_ctrl_check(ctrl_type: String, label_text: String) -> void:
 	var cb: CheckBox = CheckBox.new()
 	cb.text = label_text
 	cb.button_pressed = true
-	cb.add_theme_color_override("font_color", Color(0.55, 0.52, 0.45))
-	cb.add_theme_font_size_override("font_size", 10)
+	cb.add_theme_color_override("font_color", Color(0.5, 0.48, 0.42))
+	cb.add_theme_font_size_override("font_size", 8)
 	cb.toggled.connect(func(_pressed: bool) -> void: _apply_filters())
 	_ctrl_checks[ctrl_type] = cb
 	_vbox.add_child(cb)
@@ -150,8 +147,8 @@ func _add_lado_check(lado: String, label_text: String) -> void:
 	var cb: CheckBox = CheckBox.new()
 	cb.text = label_text
 	cb.button_pressed = true
-	cb.add_theme_color_override("font_color", Color(0.55, 0.52, 0.45))
-	cb.add_theme_font_size_override("font_size", 10)
+	cb.add_theme_color_override("font_color", Color(0.5, 0.48, 0.42))
+	cb.add_theme_font_size_override("font_size", 8)
 	cb.toggled.connect(func(_pressed: bool) -> void: _apply_filters())
 	_lado_checks[lado] = cb
 	_vbox.add_child(cb)

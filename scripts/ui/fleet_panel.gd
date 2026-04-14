@@ -22,11 +22,10 @@ func _ready() -> void:
 	# Posición: izquierda, debajo de la lista de flotas
 	anchor_left = 0.0
 	anchor_top = 0.0
-	anchor_bottom = 1.0
-	offset_left = 165.0
-	offset_top = 420.0 # Debajo del fleet_list_panel expandido
-	offset_right = 465.0
-	offset_bottom = -170.0
+	offset_left = 140.0
+	offset_top = 340.0
+	offset_right = 380.0
+	offset_bottom = 700.0
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL

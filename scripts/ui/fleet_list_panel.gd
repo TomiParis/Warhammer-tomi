@@ -9,12 +9,12 @@ var _minimized: bool = true
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: arriba-izquierda, debajo del breadcrumb
+	# Posición: arriba-izquierda, al lado del filtro
 	anchor_left = 0.0
 	anchor_top = 0.0
-	offset_left = 165.0 # A la derecha del panel de filtros
-	offset_top = 35.0
-	custom_minimum_size = Vector2(220, 0)
+	offset_left = 140.0
+	offset_top = 30.0
+	custom_minimum_size = Vector2(200, 0)
 
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0.03, 0.03, 0.06, 0.5)
@@ -30,13 +30,13 @@ func _ready() -> void:
 	_toggle_btn.text = "► FLOTAS"
 	_toggle_btn.flat = true
 	_toggle_btn.add_theme_color_override("font_color", Color(0.4, 0.55, 0.7))
-	_toggle_btn.add_theme_font_size_override("font_size", 11)
+	_toggle_btn.add_theme_font_size_override("font_size", 9)
 	_toggle_btn.pressed.connect(_on_toggle)
 	main_vbox.add_child(_toggle_btn)
 
 	_scroll_container = ScrollContainer.new()
 	_scroll_container.visible = false
-	_scroll_container.custom_minimum_size = Vector2(210, 350)
+	_scroll_container.custom_minimum_size = Vector2(190, 280)
 	main_vbox.add_child(_scroll_container)
 
 	_content = RichTextLabel.new()
@@ -45,7 +45,7 @@ func _ready() -> void:
 	_content.scroll_active = false
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content.add_theme_color_override("default_color", Color(0.6, 0.58, 0.5))
-	_content.add_theme_font_size_override("normal_font_size", 11)
+	_content.add_theme_font_size_override("normal_font_size", 9)
 	_content.meta_clicked.connect(_on_fleet_clicked)
 	_scroll_container.add_child(_content)
 
