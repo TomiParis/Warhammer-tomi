@@ -154,22 +154,22 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _check_state_transition() -> void:
 	# Transición automática basada en zoom level
+	var seg_zoom: float = _calc_segmentum_zoom(selected_segmentum) if selected_segmentum != "" else ZOOM_SEGMENTUM
 	match current_state:
 		MapState.GALAXY:
 			if _target_zoom > ZOOM_GALAXY * 2.5:
-				# Determinar qué segmentum está centrado
 				var seg: String = data_provider.find_segmentum_at(camera.position)
 				if seg != "":
 					_enter_segmentum(seg)
 		MapState.SEGMENTUM:
-			if _target_zoom > ZOOM_SEGMENTUM * 3.0 and selected_segmentum != "":
+			if _target_zoom > seg_zoom * 4.0 and selected_segmentum != "":
 				var sec: String = data_provider.find_sector_at(camera.position, selected_segmentum)
 				if sec != "":
 					_enter_sector(sec)
 			elif _target_zoom < ZOOM_GALAXY * 1.5:
 				_enter_galaxy()
 		MapState.SECTOR:
-			if _target_zoom < ZOOM_SEGMENTUM * 0.7:
+			if _target_zoom < seg_zoom * 0.7:
 				_enter_segmentum(selected_segmentum)
 
 func _handle_click(screen_pos: Vector2) -> void:
@@ -225,7 +225,19 @@ func _screen_to_world(screen_pos: Vector2) -> Vector2:
 
 func navigate_to_segmentum(seg_key: String) -> void:
 	var target_pos: Vector2 = data_provider.segmentum_centers.get(seg_key, Vector2.ZERO)
-	_animate_to(target_pos, ZOOM_SEGMENTUM, func() -> void: _enter_segmentum(seg_key))
+	# Zoom dinámico: segmentums más grandes necesitan zoom más lejano
+	var zoom: float = _calc_segmentum_zoom(seg_key)
+	_animate_to(target_pos, zoom, func() -> void: _enter_segmentum(seg_key))
+
+func _calc_segmentum_zoom(seg_key: String) -> float:
+	if seg_key == "solar":
+		return 0.35 # Solar es compacto
+	var arcs: Dictionary = GalaxyConfig.SEG_ARCS
+	if arcs.has(seg_key):
+		var arc_size: float = float(arcs[seg_key]["arc"])
+		# 60° arco → zoom 0.25, 150° arco → zoom 0.12
+		return clampf(15.0 / arc_size, 0.08, 0.35)
+	return ZOOM_SEGMENTUM
 
 func navigate_to_sector(sector_full_key: String) -> void:
 	var target_pos: Vector2 = data_provider.sector_positions.get(sector_full_key, Vector2.ZERO)
