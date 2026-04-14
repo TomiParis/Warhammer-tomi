@@ -28,7 +28,7 @@ func _ready() -> void:
 	anchor_bottom = 1.0
 	offset_left = -330.0
 	offset_top = 5.0
-	offset_bottom = -220.0 # Espacio para TurnPanel abajo
+	offset_bottom = -220.0 # Espacio para TurnPanel (215px + 5px gap)
 	offset_right = -5.0
 
 	# Contenido con VBox

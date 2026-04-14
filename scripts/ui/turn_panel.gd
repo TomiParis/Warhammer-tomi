@@ -1,4 +1,4 @@
-## turn_panel.gd - Panel de turno compacto: abajo-derecha
+## turn_panel.gd - Panel de turno: abajo-derecha, con resumen integrado
 extends PanelContainer
 
 var _fecha_label: Label = null
@@ -7,19 +7,18 @@ var _speed_label: Label = null
 var _balance_label: Label = null
 var _auto_btn: Button = null
 var _resumen_content: RichTextLabel = null
-var _showing_resumen: bool = false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: abajo-derecha, solo controles (sin resumen)
+	# Posición: abajo-derecha, debajo del PlanetInfoPanel
 	anchor_left = 1.0
 	anchor_right = 1.0
 	anchor_top = 1.0
 	anchor_bottom = 1.0
-	offset_left = -300.0
+	offset_left = -330.0
 	offset_right = -5.0
-	offset_top = -55.0
+	offset_top = -215.0
 	offset_bottom = -5.0
 
 	# Estilo
@@ -108,43 +107,23 @@ func _ready() -> void:
 		sb.pressed.connect(func() -> void: _set_speed(cap))
 		row2.add_child(sb)
 
-	# Resumen flotante (se crea como hijo del padre UILayer, se abre hacia arriba)
+	# Separador
+	var sep: HSeparator = HSeparator.new()
+	sep.add_theme_constant_override("separation", 2)
+	vbox.add_child(sep)
+
+	# Resumen integrado (scrolleable, ocupa el resto del espacio)
 	_resumen_content = RichTextLabel.new()
 	_resumen_content.bbcode_enabled = true
 	_resumen_content.fit_content = false
 	_resumen_content.scroll_active = true
-	_resumen_content.add_theme_color_override("default_color", Color(0.58, 0.55, 0.48))
-	_resumen_content.add_theme_font_size_override("normal_font_size", 11)
-	call_deferred("_setup_resumen")
-	call_deferred("_connect_signals")
-
-var _resumen_panel: PanelContainer = null
-
-func _setup_resumen() -> void:
-	var parent_node: Node = get_parent()
-	if parent_node == null:
-		return
-	_resumen_panel = PanelContainer.new()
-	_resumen_panel.visible = false
-	_resumen_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	var s: StyleBoxFlat = StyleBoxFlat.new()
-	s.bg_color = Color(0.03, 0.03, 0.06, 0.92)
-	s.border_color = Color(0.45, 0.42, 0.3, 0.2)
-	s.set_border_width_all(1)
-	s.set_corner_radius_all(3)
-	s.set_content_margin_all(8)
-	_resumen_panel.add_theme_stylebox_override("panel", s)
-	_resumen_panel.anchor_left = 1.0
-	_resumen_panel.anchor_right = 1.0
-	_resumen_panel.anchor_top = 1.0
-	_resumen_panel.anchor_bottom = 1.0
-	_resumen_panel.offset_left = -420.0
-	_resumen_panel.offset_right = -5.0
-	_resumen_panel.offset_top = -310.0
-	_resumen_panel.offset_bottom = -60.0
-	_resumen_panel.add_child(_resumen_content)
 	_resumen_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent_node.add_child(_resumen_panel)
+	_resumen_content.add_theme_color_override("default_color", Color(0.55, 0.52, 0.46))
+	_resumen_content.add_theme_font_size_override("normal_font_size", 10)
+	_resumen_content.text = "[color=#605a4a]Presiona SIGUIENTE TURNO.[/color]"
+	vbox.add_child(_resumen_content)
+
+	call_deferred("_connect_signals")
 
 func _connect_signals() -> void:
 	var ts: Node = get_node_or_null("/root/TurnSystem")
@@ -155,21 +134,9 @@ func _connect_signals() -> void:
 			ts.fecha_cambiada.connect(_on_fecha_cambiada)
 
 func _on_turno_pressed() -> void:
-	if _showing_resumen:
-		_showing_resumen = false
-		if _resumen_panel:
-			_resumen_panel.visible = false
-		_turno_btn.text = "SIGUIENTE TURNO"
-		return
-
 	var ts: Node = get_node_or_null("/root/TurnSystem")
 	if ts and ts.has_method("ejecutar_turno"):
 		ts.ejecutar_turno()
-		# Mostrar resumen post-turno
-		_showing_resumen = true
-		_turno_btn.text = "OCULTAR"
-		if _resumen_panel:
-			_resumen_panel.visible = true
 
 func _on_auto_toggled(pressed: bool) -> void:
 	var ts: Node = get_node_or_null("/root/TurnSystem")
@@ -188,7 +155,6 @@ func _on_fecha_cambiada(fecha: String) -> void:
 		_fecha_label.text = fecha
 
 func _on_turno_completado(resumen: Dictionary) -> void:
-	# Actualizar balance
 	var eco: Dictionary = resumen.get("economia", {})
 	var tg: int = int(eco.get("throne_gelt", 0))
 	var bal: int = int(eco.get("balance", 0))
@@ -199,42 +165,29 @@ func _on_turno_completado(resumen: Dictionary) -> void:
 			Color(0.5, 0.6, 0.4) if bal >= 0 else Color(0.7, 0.35, 0.3))
 
 	# Actualizar resumen
-	_update_resumen_post(resumen)
+	if _resumen_content:
+		var ev_count: int = int(resumen.get("eventos_count", 0))
+		var camp: Dictionary = resumen.get("campanas", {})
+		var mov: Dictionary = resumen.get("movimiento", {})
+
+		var t: String = ""
+		t += "[color=#807a6b]Ingresos:[/color] %s  " % _fmt(int(eco.get("ingresos_total", 0)))
+		t += "[color=#807a6b]Gastos:[/color] %s\n" % _fmt(int(eco.get("gastos_total", 0)))
+		t += "[color=#807a6b]Eventos:[/color] %d  " % ev_count
+		t += "[color=#807a6b]Campañas:[/color] %d\n" % int(camp.get("campanas_activas", 0))
+
+		var llegadas: int = int(mov.get("llegadas", 0))
+		if llegadas > 0:
+			t += "[color=#6b8c5a]%d llegaron a destino[/color]\n" % llegadas
+		var resueltas: int = int(camp.get("campanas_resueltas", 0))
+		if resueltas > 0:
+			t += "[color=#6b8c5a]%d campañas resueltas[/color]\n" % resueltas
+
+		_resumen_content.text = t
 
 	var ts: Node = get_node_or_null("/root/TurnSystem")
 	if ts and not ts.auto_turno and _auto_btn:
 		_auto_btn.set_pressed_no_signal(false)
-
-func _update_resumen_post(resumen: Dictionary) -> void:
-	if _resumen_content == null:
-		return
-
-	var eco: Dictionary = resumen.get("economia", {})
-	var ev_count: int = int(resumen.get("eventos_count", 0))
-	var camp: Dictionary = resumen.get("campanas", {})
-	var mov: Dictionary = resumen.get("movimiento", {})
-
-	var t: String = ""
-	# Economía compacta
-	t += "[color=#807a6b]Ingresos:[/color] %s  " % _fmt(int(eco.get("ingresos_total", 0)))
-	t += "[color=#807a6b]Gastos:[/color] %s\n" % _fmt(int(eco.get("gastos_total", 0)))
-
-	# Eventos
-	t += "[color=#807a6b]Eventos:[/color] %d  " % ev_count
-	t += "[color=#807a6b]Campañas:[/color] %d  " % int(camp.get("campanas_activas", 0))
-	t += "[color=#807a6b]En tránsito:[/color] %d\n" % int(mov.get("en_transito", 0))
-
-	# Llegadas
-	var llegadas: int = int(mov.get("llegadas", 0))
-	if llegadas > 0:
-		t += "[color=#6b8c5a]%d unidades llegaron a destino[/color]\n" % llegadas
-
-	# Campañas resueltas
-	var resueltas: int = int(camp.get("campanas_resueltas", 0))
-	if resueltas > 0:
-		t += "[color=#6b8c5a]%d campañas resueltas[/color]\n" % resueltas
-
-	_resumen_content.text = t
 
 func _fmt(n: int) -> String:
 	if abs(n) >= 1_000_000:
