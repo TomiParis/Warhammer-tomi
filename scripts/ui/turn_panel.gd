@@ -1,4 +1,4 @@
-## turn_panel.gd - Panel de turno con resumen pre-confirmación
+## turn_panel.gd - Panel de turno compacto: abajo-derecha
 extends PanelContainer
 
 var _fecha_label: Label = null
@@ -6,251 +6,148 @@ var _turno_btn: Button = null
 var _speed_label: Label = null
 var _balance_label: Label = null
 var _auto_btn: Button = null
-var _resumen_panel: PanelContainer = null
 var _resumen_content: RichTextLabel = null
 var _showing_resumen: bool = false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Posición: abajo-derecha
+	# Posición: abajo-derecha, compacto
 	anchor_left = 1.0
 	anchor_right = 1.0
 	anchor_top = 1.0
 	anchor_bottom = 1.0
-	offset_left = -310.0
+	offset_left = -300.0
 	offset_right = -5.0
-	offset_top = -85.0
+	offset_top = -210.0
 	offset_bottom = -5.0
 
 	# Estilo
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.04, 0.04, 0.07, 0.90)
-	style.border_color = Color(0.55, 0.5, 0.3, 0.25)
+	style.bg_color = Color(0.03, 0.03, 0.06, 0.90)
+	style.border_color = Color(0.55, 0.5, 0.3, 0.2)
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(3)
-	style.set_content_margin_all(8)
+	style.content_margin_left = 8.0
+	style.content_margin_right = 8.0
+	style.content_margin_top = 6.0
+	style.content_margin_bottom = 6.0
 	add_theme_stylebox_override("panel", style)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 4)
+	vbox.add_theme_constant_override("separation", 3)
+	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(vbox)
 
-	# Fila superior: fecha + balance
-	var top_row: HBoxContainer = HBoxContainer.new()
-	top_row.add_theme_constant_override("separation", 20)
-	vbox.add_child(top_row)
+	# Fila 1: fecha + balance
+	var row1: HBoxContainer = HBoxContainer.new()
+	row1.add_theme_constant_override("separation", 8)
+	vbox.add_child(row1)
 
 	_fecha_label = Label.new()
 	_fecha_label.text = "0.999.M41"
 	_fecha_label.add_theme_color_override("font_color", Color(0.85, 0.75, 0.35))
-	_fecha_label.add_theme_font_size_override("font_size", 16)
-	top_row.add_child(_fecha_label)
+	_fecha_label.add_theme_font_size_override("font_size", 14)
+	row1.add_child(_fecha_label)
 
 	_balance_label = Label.new()
-	_balance_label.text = "50,000 TG"
+	_balance_label.text = "50K TG"
 	_balance_label.add_theme_color_override("font_color", Color(0.6, 0.58, 0.5))
-	_balance_label.add_theme_font_size_override("font_size", 12)
+	_balance_label.add_theme_font_size_override("font_size", 11)
 	_balance_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_balance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	top_row.add_child(_balance_label)
+	row1.add_child(_balance_label)
 
-	# Fila inferior: botones
-	var bot_row: HBoxContainer = HBoxContainer.new()
-	bot_row.add_theme_constant_override("separation", 6)
-	vbox.add_child(bot_row)
+	# Fila 2: botón turno + auto + velocidad
+	var row2: HBoxContainer = HBoxContainer.new()
+	row2.add_theme_constant_override("separation", 4)
+	vbox.add_child(row2)
 
-	_turno_btn = _create_button("SIGUIENTE TURNO", Color(0.85, 0.78, 0.6), 13)
+	_turno_btn = Button.new()
+	_turno_btn.text = "SIGUIENTE TURNO"
+	_turno_btn.add_theme_color_override("font_color", Color(0.85, 0.78, 0.6))
+	_turno_btn.add_theme_font_size_override("font_size", 11)
+	var btn_s: StyleBoxFlat = StyleBoxFlat.new()
+	btn_s.bg_color = Color(0.12, 0.10, 0.06, 0.8)
+	btn_s.border_color = Color(0.5, 0.45, 0.25, 0.4)
+	btn_s.set_border_width_all(1)
+	btn_s.set_corner_radius_all(2)
+	btn_s.content_margin_left = 6.0
+	btn_s.content_margin_right = 6.0
+	btn_s.content_margin_top = 3.0
+	btn_s.content_margin_bottom = 3.0
+	_turno_btn.add_theme_stylebox_override("normal", btn_s)
+	var btn_h: StyleBoxFlat = btn_s.duplicate()
+	btn_h.bg_color = Color(0.18, 0.15, 0.08, 0.9)
+	_turno_btn.add_theme_stylebox_override("hover", btn_h)
 	_turno_btn.pressed.connect(_on_turno_pressed)
-	bot_row.add_child(_turno_btn)
+	row2.add_child(_turno_btn)
 
 	_auto_btn = Button.new()
 	_auto_btn.text = "AUTO"
 	_auto_btn.toggle_mode = true
-	_auto_btn.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
-	_auto_btn.add_theme_font_size_override("font_size", 11)
+	_auto_btn.flat = true
+	_auto_btn.add_theme_color_override("font_color", Color(0.45, 0.43, 0.38))
+	_auto_btn.add_theme_font_size_override("font_size", 10)
 	_auto_btn.toggled.connect(_on_auto_toggled)
-	bot_row.add_child(_auto_btn)
+	row2.add_child(_auto_btn)
 
 	_speed_label = Label.new()
 	_speed_label.text = "1x"
-	_speed_label.add_theme_color_override("font_color", Color(0.5, 0.48, 0.42))
-	_speed_label.add_theme_font_size_override("font_size", 11)
-	bot_row.add_child(_speed_label)
+	_speed_label.add_theme_color_override("font_color", Color(0.45, 0.42, 0.38))
+	_speed_label.add_theme_font_size_override("font_size", 10)
+	row2.add_child(_speed_label)
 
 	for spd: float in [1.0, 0.5, 0.2]:
-		var spd_btn: Button = Button.new()
-		spd_btn.text = "%dx" % int(1.0 / spd)
-		spd_btn.flat = true
-		spd_btn.add_theme_color_override("font_color", Color(0.45, 0.42, 0.38))
-		spd_btn.add_theme_font_size_override("font_size", 10)
-		var captured_spd: float = spd
-		spd_btn.pressed.connect(func() -> void: _set_speed(captured_spd))
-		bot_row.add_child(spd_btn)
+		var sb: Button = Button.new()
+		sb.text = "%dx" % int(1.0 / spd)
+		sb.flat = true
+		sb.add_theme_color_override("font_color", Color(0.4, 0.38, 0.33))
+		sb.add_theme_font_size_override("font_size", 9)
+		var cap: float = spd
+		sb.pressed.connect(func() -> void: _set_speed(cap))
+		row2.add_child(sb)
 
-	# Panel de resumen flotante (se expande hacia ARRIBA)
-	_resumen_panel = PanelContainer.new()
-	_resumen_panel.visible = false
-	_resumen_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	var res_style: StyleBoxFlat = StyleBoxFlat.new()
-	res_style.bg_color = Color(0.04, 0.04, 0.07, 0.92)
-	res_style.border_color = Color(0.45, 0.42, 0.3, 0.2)
-	res_style.set_border_width_all(1)
-	res_style.set_content_margin_all(10)
-	_resumen_panel.add_theme_stylebox_override("panel", res_style)
-	# Posicionado como hijo del parent (UILayer), no del vbox
-	call_deferred("_setup_resumen_panel")
+	# Separador
+	var sep: HSeparator = HSeparator.new()
+	sep.add_theme_constant_override("separation", 2)
+	vbox.add_child(sep)
 
+	# Resumen (scrolleable, ocupa el espacio restante)
 	_resumen_content = RichTextLabel.new()
 	_resumen_content.bbcode_enabled = true
-	_resumen_content.fit_content = true
-	_resumen_content.scroll_active = false
-	_resumen_content.add_theme_color_override("default_color", Color(0.65, 0.62, 0.55))
-	_resumen_content.add_theme_font_size_override("normal_font_size", 12)
-	_resumen_panel.add_child(_resumen_content)
+	_resumen_content.fit_content = false
+	_resumen_content.scroll_active = true
+	_resumen_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_resumen_content.add_theme_color_override("default_color", Color(0.55, 0.52, 0.46))
+	_resumen_content.add_theme_font_size_override("normal_font_size", 10)
+	vbox.add_child(_resumen_content)
 
+	_update_resumen_idle()
 	call_deferred("_connect_signals")
 
-func _setup_resumen_panel() -> void:
-	# Agregar el resumen al padre (UILayer) para que flote independiente
-	var parent_node: Node = get_parent()
-	if parent_node:
-		parent_node.add_child(_resumen_panel)
-		# Posicionar arriba del TurnPanel (abajo-derecha, expandiéndose hacia arriba)
-		_resumen_panel.anchor_left = 1.0
-		_resumen_panel.anchor_right = 1.0
-		_resumen_panel.anchor_top = 1.0
-		_resumen_panel.anchor_bottom = 1.0
-		_resumen_panel.offset_left = -460.0
-		_resumen_panel.offset_right = -5.0
-		_resumen_panel.offset_top = -330.0
-		_resumen_panel.offset_bottom = -90.0
-
-func _create_button(text: String, color: Color, size: int) -> Button:
-	var btn: Button = Button.new()
-	btn.text = text
-	btn.add_theme_color_override("font_color", color)
-	btn.add_theme_font_size_override("font_size", size)
-	var s: StyleBoxFlat = StyleBoxFlat.new()
-	s.bg_color = Color(0.15, 0.13, 0.08, 0.8)
-	s.border_color = Color(0.6, 0.5, 0.3, 0.4)
-	s.set_border_width_all(1)
-	s.set_corner_radius_all(2)
-	s.set_content_margin_all(6)
-	btn.add_theme_stylebox_override("normal", s)
-	var h: StyleBoxFlat = s.duplicate()
-	h.bg_color = Color(0.2, 0.17, 0.1, 0.9)
-	btn.add_theme_stylebox_override("hover", h)
-	return btn
-
 func _connect_signals() -> void:
-	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
-	if turn_sys:
-		if turn_sys.has_signal("turno_completado"):
-			turn_sys.turno_completado.connect(_on_turno_completado)
-		if turn_sys.has_signal("fecha_cambiada"):
-			turn_sys.fecha_cambiada.connect(_on_fecha_cambiada)
-
-# =============================================================================
-# LÓGICA: mostrar resumen → confirmar → ejecutar
-# =============================================================================
+	var ts: Node = get_node_or_null("/root/TurnSystem")
+	if ts:
+		if ts.has_signal("turno_completado"):
+			ts.turno_completado.connect(_on_turno_completado)
+		if ts.has_signal("fecha_cambiada"):
+			ts.fecha_cambiada.connect(_on_fecha_cambiada)
 
 func _on_turno_pressed() -> void:
-	if _showing_resumen:
-		_hide_resumen()
-		return
-
-	# Ejecutar turno y mostrar resumen después
-	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
-	if turn_sys and turn_sys.has_method("ejecutar_turno"):
-		turn_sys.ejecutar_turno()
-		_show_resumen()
-
-func _show_resumen() -> void:
-	_showing_resumen = true
-	_turno_btn.text = "OCULTAR RESUMEN"
-	_resumen_panel.visible = true
-
-	# Calcular resumen previo
-	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
-	var gd_node: Node = get_node_or_null("/root/GameData")
-	if turn_sys == null or gd_node == null:
-		return
-
-	var planetas: Array = gd_node.get_all_planets()
-	var eco: EconomySystem = turn_sys.economy
-
-	# Calcular ingresos estimados sin aplicar
-	var ingresos_est: int = 0
-	var planetas_en_amenaza: int = 0
-	var planetas_baja_lealtad: int = 0
-	for p_idx: int in planetas.size():
-		var p: Dictionary = planetas[p_idx]
-		if int(p["poblacion"]) <= 0:
-			continue
-		var ing: int = int(p["ingresos_mensuales"])
-		if p.get("amenaza_actual") != null:
-			ing = int(float(ing) * 0.3)
-			planetas_en_amenaza += 1
-		if int(p["lealtad_imperial"]) < 15:
-			ing = 0
-		if int(p["lealtad_imperial"]) < 30:
-			planetas_baja_lealtad += 1
-		ingresos_est += ing
-
-	var gastos_est: int = int(float(ingresos_est) * 0.3)
-	var balance_est: int = ingresos_est - gastos_est
-
-	# Campañas activas (contar eventos medios+ sin resolver)
-	var campanas: int = 0
-	for ev: Dictionary in turn_sys.historial_eventos:
-		if int(ev.get("severity", 0)) >= EventDefinitions.Severity.MEDIUM:
-			if not bool(ev.get("resuelto", false)):
-				campanas += 1
-
-	var text: String = ""
-	text += "[color=#999080]RESUMEN PRE-TURNO[/color]\n\n"
-
-	# Economía
-	text += "[color=#807a6b]ECONOMÍA ESTIMADA[/color]\n"
-	var bal_color: String = "6b8c5a" if balance_est >= 0 else "8c5a5a"
-	text += "  Ingresos: [color=#c8c0b0]%s TG[/color]\n" % _format_num(ingresos_est)
-	text += "  Gastos:   [color=#c8c0b0]%s TG[/color]\n" % _format_num(gastos_est)
-	text += "  Balance:  [color=#%s]%s%s TG[/color]\n" % [bal_color, "+" if balance_est >= 0 else "", _format_num(balance_est)]
-	text += "  Tesoro:   [color=#c8c0b0]%s TG[/color]\n" % _format_num(eco.throne_gelt)
-
-	# Estado del Imperium
-	text += "\n[color=#807a6b]ESTADO DEL IMPERIUM[/color]\n"
-	text += "  Planetas totales: [color=#c8c0b0]%d[/color]\n" % planetas.size()
-	text += "  Con amenaza activa: [color=#8c5a5a]%d[/color]\n" % planetas_en_amenaza
-	text += "  Lealtad baja (<30): [color=#c09a40]%d[/color]\n" % planetas_baja_lealtad
-	text += "  Crisis sin resolver: [color=#8c5a5a]%d[/color]\n" % campanas
-
-	# Turno
-	text += "\n[color=#807a6b]PRÓXIMO TURNO[/color]\n"
-	text += "  Fecha: [color=#d9c05a]%s[/color] → siguiente mes\n" % turn_sys.get_fecha_imperial()
-	text += "  Eventos esperados: [color=#c8c0b0]3-8[/color]\n"
-
-	_resumen_content.text = text
-
-func _hide_resumen() -> void:
-	_showing_resumen = false
-	_turno_btn.text = "SIGUIENTE TURNO"
-	_resumen_panel.visible = false
-
-# =============================================================================
-# SEÑALES Y CONTROLES
-# =============================================================================
+	var ts: Node = get_node_or_null("/root/TurnSystem")
+	if ts and ts.has_method("ejecutar_turno"):
+		ts.ejecutar_turno()
 
 func _on_auto_toggled(pressed: bool) -> void:
-	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
-	if turn_sys and turn_sys.has_method("set_auto_turno"):
-		turn_sys.set_auto_turno(pressed)
+	var ts: Node = get_node_or_null("/root/TurnSystem")
+	if ts and ts.has_method("set_auto_turno"):
+		ts.set_auto_turno(pressed)
 
 func _set_speed(spd: float) -> void:
-	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
-	if turn_sys and turn_sys.has_method("set_velocidad"):
-		turn_sys.set_velocidad(spd)
+	var ts: Node = get_node_or_null("/root/TurnSystem")
+	if ts and ts.has_method("set_velocidad"):
+		ts.set_velocidad(spd)
 	if _speed_label:
 		_speed_label.text = "%dx" % int(1.0 / spd)
 
@@ -259,20 +156,60 @@ func _on_fecha_cambiada(fecha: String) -> void:
 		_fecha_label.text = fecha
 
 func _on_turno_completado(resumen: Dictionary) -> void:
+	# Actualizar balance
 	var eco: Dictionary = resumen.get("economia", {})
 	var tg: int = int(eco.get("throne_gelt", 0))
-	var balance: int = int(eco.get("balance", 0))
-	var signo: String = "+" if balance >= 0 else ""
+	var bal: int = int(eco.get("balance", 0))
 	if _balance_label:
-		_balance_label.text = "%s TG (%s%s)" % [_format_num(tg), signo, _format_num(balance)]
-		var color: Color = Color(0.5, 0.6, 0.4) if balance >= 0 else Color(0.7, 0.35, 0.3)
-		_balance_label.add_theme_color_override("font_color", color)
+		var s: String = "+" if bal >= 0 else ""
+		_balance_label.text = "%s TG (%s%s)" % [_fmt(tg), s, _fmt(bal)]
+		_balance_label.add_theme_color_override("font_color",
+			Color(0.5, 0.6, 0.4) if bal >= 0 else Color(0.7, 0.35, 0.3))
 
-	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
-	if turn_sys and not turn_sys.auto_turno and _auto_btn:
+	# Actualizar resumen
+	_update_resumen_post(resumen)
+
+	var ts: Node = get_node_or_null("/root/TurnSystem")
+	if ts and not ts.auto_turno and _auto_btn:
 		_auto_btn.set_pressed_no_signal(false)
 
-func _format_num(n: int) -> String:
+func _update_resumen_idle() -> void:
+	if _resumen_content == null:
+		return
+	_resumen_content.text = "[color=#605a4a]Presiona SIGUIENTE TURNO para avanzar.[/color]"
+
+func _update_resumen_post(resumen: Dictionary) -> void:
+	if _resumen_content == null:
+		return
+
+	var eco: Dictionary = resumen.get("economia", {})
+	var ev_count: int = int(resumen.get("eventos_count", 0))
+	var camp: Dictionary = resumen.get("campanas", {})
+	var mov: Dictionary = resumen.get("movimiento", {})
+
+	var t: String = ""
+	# Economía compacta
+	t += "[color=#807a6b]Ingresos:[/color] %s  " % _fmt(int(eco.get("ingresos_total", 0)))
+	t += "[color=#807a6b]Gastos:[/color] %s\n" % _fmt(int(eco.get("gastos_total", 0)))
+
+	# Eventos
+	t += "[color=#807a6b]Eventos:[/color] %d  " % ev_count
+	t += "[color=#807a6b]Campañas:[/color] %d  " % int(camp.get("campanas_activas", 0))
+	t += "[color=#807a6b]En tránsito:[/color] %d\n" % int(mov.get("en_transito", 0))
+
+	# Llegadas
+	var llegadas: int = int(mov.get("llegadas", 0))
+	if llegadas > 0:
+		t += "[color=#6b8c5a]%d unidades llegaron a destino[/color]\n" % llegadas
+
+	# Campañas resueltas
+	var resueltas: int = int(camp.get("campanas_resueltas", 0))
+	if resueltas > 0:
+		t += "[color=#6b8c5a]%d campañas resueltas[/color]\n" % resueltas
+
+	_resumen_content.text = t
+
+func _fmt(n: int) -> String:
 	if abs(n) >= 1_000_000:
 		return "%.1fM" % (float(n) / 1_000_000.0)
 	elif abs(n) >= 1_000:

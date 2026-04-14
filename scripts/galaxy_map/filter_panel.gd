@@ -12,21 +12,15 @@ var _minimized: bool = false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Estilo
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.04, 0.04, 0.07, 0.88)
-	style.border_color = Color(0.45, 0.42, 0.3, 0.2)
-	style.border_width_right = 1
-	style.set_corner_radius_all(0)
-	style.set_content_margin_all(10)
-	add_theme_stylebox_override("panel", style)
-
 	# Posición: lateral izquierdo, compacto
 	anchor_left = 0.0
 	anchor_top = 0.0
-	offset_left = 0.0
+	offset_left = 5.0
 	offset_top = 35.0
-	custom_minimum_size = Vector2(160, 0)
+	custom_minimum_size = Vector2(150, 0)
+
+	# Estilo: transparente cuando minimizado, con fondo cuando expandido
+	_update_style()
 
 	var main_vbox: VBoxContainer = VBoxContainer.new()
 	main_vbox.add_theme_constant_override("separation", 0)
@@ -61,6 +55,21 @@ func _on_toggle() -> void:
 	_minimized = not _minimized
 	_scroll.visible = not _minimized
 	_toggle_btn.text = "► FILTROS" if _minimized else "▼ FILTROS"
+	_update_style()
+
+func _update_style() -> void:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	if _minimized:
+		style.bg_color = Color(0.04, 0.04, 0.07, 0.5)
+		style.border_color = Color(0.0, 0.0, 0.0, 0.0)
+		style.set_content_margin_all(2)
+	else:
+		style.bg_color = Color(0.04, 0.04, 0.07, 0.85)
+		style.border_color = Color(0.45, 0.42, 0.3, 0.15)
+		style.border_width_right = 1
+		style.set_content_margin_all(6)
+	style.set_corner_radius_all(0)
+	add_theme_stylebox_override("panel", style)
 
 func _build_filters() -> void:
 	# Título

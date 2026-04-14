@@ -28,7 +28,7 @@ func _ready() -> void:
 	anchor_bottom = 1.0
 	offset_left = -330.0
 	offset_top = 5.0
-	offset_bottom = -210.0 # Espacio para el EventLog abajo
+	offset_bottom = -220.0 # Espacio para TurnPanel abajo
 	offset_right = -5.0
 
 	# Contenido con VBox
