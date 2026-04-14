@@ -5,8 +5,9 @@
 class_name GalaxyDataProvider
 
 # Espacio total de la galaxia
-const GALAXY_DISC_RADIUS: float = 4800.0 # Radio del disco galáctico desde el centro galáctico (0,0)
+const GALAXY_DISC_RADIUS: float = 4800.0 # Radio del disco visual desde el centro galáctico (0,0)
 const SOLAR_RADIUS: float = 600.0 # Radio del Segmentum Solar alrededor de Terra
+const MAP_RADIUS: float = 4500.0 # Radio fijo para posicionar elementos canónicos desde Terra
 
 # Terra desplazada al oeste del centro galáctico (~26,000 ly en la realidad)
 const TERRA_OFFSET: Vector2 = Vector2(-1300.0, 230.0)
@@ -85,11 +86,10 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 # radius_fraction: 0.0=centro, 1.0=borde de la galaxia
 
 func _map_to_world(map_degrees: float, radius_fraction: float) -> Vector2:
-	# Las coordenadas del mapa canónico son relativas a Terra
-	# radius_fraction: 0=Terra, 1=borde del disco galáctico en esa dirección
+	# Posiciona elementos canónicos usando RADIO FIJO desde Terra
+	# (la distorsión por disco asimétrico solo afecta a los polígonos de segmentae)
 	var godot_rad: float = deg_to_rad(map_degrees - 90.0)
-	var max_dist: float = _terra_to_disc_edge(godot_rad)
-	var pos_from_terra: Vector2 = Vector2(cos(godot_rad), sin(godot_rad)) * (radius_fraction * max_dist)
+	var pos_from_terra: Vector2 = Vector2(cos(godot_rad), sin(godot_rad)) * (radius_fraction * MAP_RADIUS)
 	return TERRA_OFFSET + pos_from_terra
 
 # Calcula la distancia desde Terra al borde del disco galáctico en un ángulo dado
