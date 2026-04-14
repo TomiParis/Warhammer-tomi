@@ -25,6 +25,7 @@ const PAN_SPEED: float = 1.0
 @onready var filter_panel: PanelContainer = $UILayer/FilterPanel
 @onready var minimap_container: Control = $UILayer/Minimap
 @onready var chapter_panel: PanelContainer = $UILayer/ChapterPanel
+@onready var fleet_panel: PanelContainer = $UILayer/FleetPanel
 
 # === DATOS ===
 var galaxy: Dictionary = {}
@@ -194,7 +195,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _is_mouse_over_ui() -> bool:
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
-	var ui_panels: Array = [info_panel, filter_panel, search_panel, chapter_panel]
+	var ui_panels: Array = [info_panel, filter_panel, search_panel, chapter_panel, fleet_panel]
 	var turn_p: Control = ui_layer.get_node_or_null("TurnPanel")
 	if turn_p:
 		ui_panels.append(turn_p)
@@ -248,6 +249,11 @@ func _handle_click(screen_pos: Vector2) -> void:
 				navigate_to_segmentum(seg)
 
 		MapState.SEGMENTUM:
+			# Primero verificar si clickeó una Battlefleet
+			var bf: Dictionary = _find_battlefleet_at(world_pos, 30.0 / _current_zoom)
+			if not bf.is_empty():
+				_show_fleet(bf)
+				return
 			# Solo navegar si el click cae DENTRO del radio del sector
 			var sec: String = data_provider.find_sector_at_within_radius(world_pos, selected_segmentum)
 			if sec != "":
@@ -320,6 +326,38 @@ func _show_chapter(ch: Dictionary) -> void:
 func _hide_chapter() -> void:
 	if chapter_panel:
 		chapter_panel.visible = false
+
+func _find_battlefleet_at(world_pos: Vector2, threshold: float) -> Dictionary:
+	var gd_node: Node = get_node_or_null("/root/GameData")
+	if gd_node == null:
+		return {}
+	var fl_data: Dictionary = gd_node.fleet_data
+	if fl_data.is_empty():
+		return {}
+	var battlefleets: Array = fl_data.get("battlefleets", [])
+	for bf: Dictionary in battlefleets:
+		var bf_sector: String = str(bf["sector"])
+		if not bf_sector.begins_with(selected_segmentum):
+			continue
+		if not data_provider.sector_positions.has(bf_sector):
+			continue
+		var pos: Vector2 = data_provider.sector_positions[bf_sector] + Vector2(0.0, -50.0)
+		if world_pos.distance_to(pos) < threshold:
+			return bf
+	return {}
+
+func _show_fleet(bf: Dictionary) -> void:
+	if fleet_panel and fleet_panel.has_method("show_battlefleet"):
+		fleet_panel.show_battlefleet(bf)
+		fleet_panel.visible = true
+		if info_panel:
+			info_panel.visible = false
+		if chapter_panel:
+			chapter_panel.visible = false
+
+func _hide_fleet() -> void:
+	if fleet_panel:
+		fleet_panel.visible = false
 
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
 	var viewport_size: Vector2 = get_viewport_rect().size

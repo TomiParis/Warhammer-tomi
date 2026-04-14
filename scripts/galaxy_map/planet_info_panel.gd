@@ -198,7 +198,7 @@ func _build_fleet_section(seg_key: String, sec_key: String) -> String:
 				estado_col = "8c5a5a"
 			elif str(bf["estado"]) == "reparaciones":
 				estado_col = "c09a40"
-			t += " [color=#5a7a9a]⚓[/color] [color=#c8c0b0]%s[/color]\n" % str(bf["nombre"])
+			t += " [color=#5a7a9a]⚓[/color] [url=fleet_%s][color=#5a8ab0]%s[/color][/url]\n" % [str(bf["sector"]), str(bf["nombre"])]
 			t += "   [color=#807a6b]%s[/color]\n" % str(bf["admiral"])
 			t += "   [color=#807a6b]%d capital, %d cruceros, %d escoltas[/color]\n" % [
 				int(bf["naves_capital"]), int(bf["cruceros"]), int(bf["escoltas"])]
@@ -292,6 +292,19 @@ func _build_governance_section(ctrl: Dictionary) -> String:
 
 func _on_meta_clicked(meta: Variant) -> void:
 	var meta_str: String = str(meta)
+	if meta_str.begins_with("fleet_"):
+		var sector_key: String = meta_str.substr(6)
+		var gd_node: Node = get_node_or_null("/root/GameData")
+		if gd_node == null:
+			return
+		var fl_data: Dictionary = gd_node.fleet_data
+		for bf: Dictionary in fl_data.get("battlefleets", []):
+			if str(bf["sector"]) == sector_key:
+				var galaxy_map = get_tree().get_first_node_in_group("galaxy_map")
+				if galaxy_map and galaxy_map.has_method("_show_fleet"):
+					galaxy_map._show_fleet(bf)
+				break
+		return
 	if meta_str.begins_with("chapter_"):
 		var ch_name: String = meta_str.substr(8) # Quitar "chapter_"
 		var gd_node: Node = get_node_or_null("/root/GameData")
