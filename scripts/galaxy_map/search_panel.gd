@@ -19,11 +19,11 @@ func _ready() -> void:
 	style.set_content_margin_all(10)
 	add_theme_stylebox_override("panel", style)
 
-	# Posición
+	# Posición: debajo del TurnPanel
 	anchor_left = 0.5
 	anchor_top = 0.0
 	offset_left = -200.0
-	offset_top = 50.0
+	offset_top = 90.0
 	custom_minimum_size = Vector2(400, 300)
 
 	# Layout

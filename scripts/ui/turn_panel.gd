@@ -3,7 +3,6 @@ extends PanelContainer
 
 var _fecha_label: Label = null
 var _turno_btn: Button = null
-var _confirm_btn: Button = null
 var _speed_label: Label = null
 var _balance_label: Label = null
 var _auto_btn: Button = null
@@ -62,11 +61,6 @@ func _ready() -> void:
 	_turno_btn = _create_button("SIGUIENTE TURNO", Color(0.85, 0.78, 0.6), 13)
 	_turno_btn.pressed.connect(_on_turno_pressed)
 	bot_row.add_child(_turno_btn)
-
-	_confirm_btn = _create_button("CONFIRMAR", Color(0.5, 0.8, 0.4), 13)
-	_confirm_btn.visible = false
-	_confirm_btn.pressed.connect(_on_confirm_pressed)
-	bot_row.add_child(_confirm_btn)
 
 	_auto_btn = Button.new()
 	_auto_btn.text = "AUTO"
@@ -145,23 +139,18 @@ func _connect_signals() -> void:
 
 func _on_turno_pressed() -> void:
 	if _showing_resumen:
-		# Si ya está mostrando resumen, ocultarlo
 		_hide_resumen()
 		return
 
-	# Mostrar resumen pre-turno
-	_show_resumen()
-
-func _on_confirm_pressed() -> void:
-	_hide_resumen()
+	# Ejecutar turno y mostrar resumen después
 	var turn_sys: Node = get_node_or_null("/root/TurnSystem")
 	if turn_sys and turn_sys.has_method("ejecutar_turno"):
 		turn_sys.ejecutar_turno()
+		_show_resumen()
 
 func _show_resumen() -> void:
 	_showing_resumen = true
-	_turno_btn.text = "CANCELAR"
-	_confirm_btn.visible = true
+	_turno_btn.text = "OCULTAR RESUMEN"
 	_resumen_panel.visible = true
 
 	# Calcular resumen previo
@@ -229,7 +218,6 @@ func _show_resumen() -> void:
 func _hide_resumen() -> void:
 	_showing_resumen = false
 	_turno_btn.text = "SIGUIENTE TURNO"
-	_confirm_btn.visible = false
 	_resumen_panel.visible = false
 
 # =============================================================================
