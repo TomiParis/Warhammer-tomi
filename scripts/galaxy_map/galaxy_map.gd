@@ -155,19 +155,26 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_handle_hover(mm.position)
 
+	# --- ATAJOS ---
+	if event is InputEventKey:
+		var key: InputEventKey = event
+		if key.pressed:
+			if key.keycode == KEY_F and key.ctrl_pressed:
+				_toggle_search()
+				get_viewport().set_input_as_handled()
+			elif key.keycode == KEY_ESCAPE:
+				_go_back()
+				get_viewport().set_input_as_handled()
+
 func _is_mouse_over_ui() -> bool:
-	# Verificar si el mouse está sobre algún panel de UI visible
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
 	var ui_panels: Array = [info_panel, filter_panel, search_panel]
-
-	# Agregar TurnPanel y EventLog si existen
-	var turn_panel: Control = ui_layer.get_node_or_null("TurnPanel")
-	if turn_panel:
-		ui_panels.append(turn_panel)
-	var event_log: Control = ui_layer.get_node_or_null("EventLog")
-	if event_log:
-		ui_panels.append(event_log)
-
+	var turn_p: Control = ui_layer.get_node_or_null("TurnPanel")
+	if turn_p:
+		ui_panels.append(turn_p)
+	var ev_log: Control = ui_layer.get_node_or_null("EventLog")
+	if ev_log:
+		ui_panels.append(ev_log)
 	for panel in ui_panels:
 		if panel == null or not panel is Control:
 			continue
@@ -175,19 +182,6 @@ func _is_mouse_over_ui() -> bool:
 		if ctrl.visible and ctrl.get_global_rect().has_point(mouse_pos):
 			return true
 	return false
-
-	# --- ATAJOS ---
-	if event is InputEventKey:
-		var key: InputEventKey = event
-		if key.pressed:
-			# Ctrl+F para buscar
-			if key.keycode == KEY_F and key.ctrl_pressed:
-				_toggle_search()
-				get_viewport().set_input_as_handled()
-			# Escape para volver
-			elif key.keycode == KEY_ESCAPE:
-				_go_back()
-				get_viewport().set_input_as_handled()
 
 # =============================================================================
 # TRANSICIONES ENTRE CAPAS
