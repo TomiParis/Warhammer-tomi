@@ -21,15 +21,15 @@ func _ready() -> void:
 	style.content_margin_bottom = 6.0
 	add_theme_stylebox_override("panel", style)
 
-	# Posición: derecha, misma zona que PlanetInfoPanel
-	anchor_left = 1.0
+	# Posición: abajo, al lado del event log (horizontal)
+	anchor_left = 0.0
 	anchor_right = 1.0
-	anchor_top = 0.0
+	anchor_top = 1.0
 	anchor_bottom = 1.0
-	offset_left = -430.0
-	offset_top = 5.0
-	offset_bottom = -220.0
-	offset_right = -5.0
+	offset_left = 5.0
+	offset_right = -440.0 # No tapar minimap/turno
+	offset_top = -280.0
+	offset_bottom = -5.0
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL

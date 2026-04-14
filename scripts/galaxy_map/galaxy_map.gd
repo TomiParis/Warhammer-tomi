@@ -279,11 +279,10 @@ func _handle_click(screen_pos: Vector2) -> void:
 			)
 			if not planet.is_empty():
 				select_planet(planet)
-				# Si el planeta tiene un capítulo, también se puede ver
-				_hide_chapter()
+				_hide_all_detail_panels()
 			else:
 				deselect_planet()
-				_hide_chapter()
+				_hide_all_detail_panels()
 
 func _handle_hover(screen_pos: Vector2) -> void:
 	if current_state != MapState.SECTOR:
@@ -335,6 +334,12 @@ func _hide_chapter() -> void:
 	if chapter_panel:
 		chapter_panel.visible = false
 
+func _hide_all_detail_panels() -> void:
+	if chapter_panel:
+		chapter_panel.visible = false
+	if campaign_panel:
+		campaign_panel.visible = false
+
 func _find_battlefleet_at(world_pos: Vector2, threshold: float) -> Dictionary:
 	var gd_node: Node = get_node_or_null("/root/GameData")
 	if gd_node == null:
@@ -367,10 +372,11 @@ func _show_campaign(camp: Dictionary) -> void:
 	var gd_node: Node = get_node_or_null("/root/GameData")
 	if campaign_panel and campaign_panel.has_method("show_campaign"):
 		var mil_units: Array = gd_node.military_units if gd_node else []
+		# Cerrar otros paneles de detalle primero
+		if chapter_panel:
+			chapter_panel.visible = false
 		campaign_panel.show_campaign(camp, mil_units)
 		campaign_panel.visible = true
-		if info_panel:
-			info_panel.visible = false
 
 func _show_fleet_transports() -> void:
 	if fleet_list_panel and fleet_list_panel.has_method("_switch_tab"):
@@ -462,6 +468,7 @@ func _enter_galaxy() -> void:
 	selected_segmentum = ""
 	selected_sector = ""
 	deselect_planet()
+	_hide_all_detail_panels()
 	renderer.set_state(MapState.GALAXY, "", "")
 	_update_breadcrumb()
 
@@ -470,6 +477,7 @@ func _enter_segmentum(seg_key: String) -> void:
 	selected_segmentum = seg_key
 	selected_sector = ""
 	deselect_planet()
+	_hide_all_detail_panels()
 	renderer.set_state(MapState.SEGMENTUM, seg_key, "")
 	_update_breadcrumb()
 
