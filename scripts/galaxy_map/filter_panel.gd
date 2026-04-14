@@ -61,7 +61,7 @@ func _on_toggle() -> void:
 func _update_style() -> void:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	if _minimized:
-		style.bg_color = Color(0.04, 0.04, 0.07, 0.5)
+		style.bg_color = Color(0.0, 0.0, 0.0, 0.0) # Totalmente transparente
 		style.border_color = Color(0.0, 0.0, 0.0, 0.0)
 		style.set_content_margin_all(2)
 	else:

@@ -20,15 +20,15 @@ func _ready() -> void:
 	style.content_margin_bottom = 12.0
 	add_theme_stylebox_override("panel", style)
 
-	# Layout — panel anclado a la derecha, ocupa todo el alto disponible
-	custom_minimum_size = Vector2(320, 0)
+	# Layout — panel ancho anclado a la derecha
+	custom_minimum_size = Vector2(420, 0)
 	anchor_left = 1.0
 	anchor_right = 1.0
 	anchor_top = 0.0
 	anchor_bottom = 1.0
-	offset_left = -330.0
+	offset_left = -430.0
 	offset_top = 5.0
-	offset_bottom = -220.0 # Espacio para TurnPanel (215px + 5px gap)
+	offset_bottom = -220.0
 	offset_right = -5.0
 
 	# Contenido con VBox

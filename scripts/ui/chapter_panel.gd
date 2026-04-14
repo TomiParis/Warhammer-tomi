@@ -24,7 +24,7 @@ func _ready() -> void:
 	anchor_right = 1.0
 	anchor_top = 0.0
 	anchor_bottom = 1.0
-	offset_left = -330.0
+	offset_left = -430.0
 	offset_top = 5.0
 	offset_bottom = -220.0
 	offset_right = -5.0

@@ -19,8 +19,8 @@ func _ready() -> void:
 	anchor_right = 1.0
 	anchor_top = 1.0
 	anchor_bottom = 1.0
-	offset_left = -810.0 # A la izquierda del minimap
-	offset_right = -500.0
+	offset_left = -940.0 # A la izquierda del minimap
+	offset_right = -600.0
 	offset_top = -130.0 # Contraído por default
 	offset_bottom = -5.0
 

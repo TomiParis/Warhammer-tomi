@@ -15,7 +15,7 @@ func _ready() -> void:
 	# Posición: abajo-derecha, al lado izquierdo del TurnPanel
 	anchor_left = 1.0
 	anchor_top = 1.0
-	offset_left = -330.0 - MINIMAP_SIZE - 5.0 # Pegado a la izquierda del TurnPanel
+	offset_left = -430.0 - MINIMAP_SIZE - 5.0 # Pegado a la izquierda del TurnPanel
 	offset_top = -MINIMAP_SIZE - 5.0
 	size = Vector2(MINIMAP_SIZE, MINIMAP_SIZE)
 
