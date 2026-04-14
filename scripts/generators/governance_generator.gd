@@ -40,7 +40,9 @@ func _expand_controllers(galaxy: Dictionary) -> void:
 	var planetas: Array = galaxy.get("planetas", [])
 	for p_idx: int in planetas.size():
 		var p: Dictionary = planetas[p_idx]
-		var ctrl: Dictionary = p.get("controlador", {})
+		var old_ctrl: Dictionary = p.get("controlador", {})
+		# Copiar para evitar modificar diccionarios read-only de const
+		var ctrl: Dictionary = old_ctrl.duplicate(true)
 		var tipo: String = str(ctrl.get("tipo", "gobernador_planetario"))
 
 		match tipo:
@@ -59,12 +61,12 @@ func _expand_controllers(galaxy: Dictionary) -> void:
 			"aristocracia_local", "nobleza_local":
 				_expand_governor(ctrl)
 			"adeptus_astartes":
-				pass # Ya expandido por chapter_generator
+				pass
 			"adeptus_arbites":
 				ctrl["ley_marcial"] = true
 				ctrl["turnos_restantes"] = rng.randi_range(3, 12)
 			_:
-				pass # adeptus_terra, ninguno — dejar como está
+				pass
 
 		p["controlador"] = ctrl
 
